@@ -28,11 +28,13 @@
             height: 100vh;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             user-select: none;
+            touch-action: none; /* Empêche le scroll sur mobile */
             color: var(--text-main);
         }
         
         canvas {
             display: block; 
+            touch-action: none;
         }
 
         /* --- ECRAN TITRE --- */
@@ -220,27 +222,29 @@
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 400px; z-index: 11; pointer-events: auto;
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 0; overflow: hidden;
+            max-width: 90vw; /* Responsive */
         }
 
         @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, -45%) scale(0.9); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
         .modal-header { background: rgba(0, 0, 0, 0.3); padding: 15px 20px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; }
         
-        /* Application de la police rétro aux titres de menu */
         .modal-header h3 { 
             font-family: 'Press Start 2P', monospace;
             font-size: 0.9rem;
             margin: 0; color: #f1c40f; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); line-height: 1.4;
         }
         
-        .close-icon { cursor: pointer; font-size: 1.5rem; color: var(--text-muted); transition: color 0.2s; }
+        .close-icon { cursor: pointer; font-size: 1.5rem; color: var(--text-muted); transition: color 0.2s; padding: 5px; }
         .close-icon:hover { color: var(--danger-color); }
 
-        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; }
 
         .craft-item, .setting-item {
             background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
             padding: 12px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;
+            flex-wrap: wrap; /* Responsive */
+            gap: 10px;
         }
         .craft-item:hover, .setting-item:hover { background: rgba(255, 255, 255, 0.1); }
         
@@ -249,7 +253,7 @@
             font-size: 2rem; background: rgba(0,0,0,0.3); width: 48px; height: 48px;
             display: flex; justify-content: center; align-items: center; border-radius: 8px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
-        .craft-details h4, .setting-item h4 { margin: 0 0 5px 0; font-size: 1.1rem; }
+        .craft-details h4, .setting-item h4 { margin: 0 0 5px 0; font-size: 1rem; }
         
         .craft-cost { display: flex; gap: 6px; }
         .cost-pill {
@@ -257,7 +261,6 @@
             display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Application de la police rétro aux boutons d'interface */
         .btn-craft, .btn-keybind {
             font-family: 'Press Start 2P', monospace;
             font-size: 0.65rem;
@@ -279,6 +282,23 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; margin-top: -6px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 2px; }
         
+        /* --- MOBILE ADAPTATIONS --- */
+        @media (max-width: 768px) {
+            .pixel-title { font-size: 3rem; text-shadow: 2px 2px 0px #e67e22, 4px 4px 0px #d35400, 6px 6px 0px #a04000; margin-bottom: 40px; }
+            #hud-top { padding: 10px; }
+            #status-panel { padding: 10px; width: 120px; }
+            .btn-icon { width: 44px; height: 44px; }
+            .btn-icon .hint { display: none; } /* Masquer raccourcis clavier */
+            
+            #tutorial-panel { width: 200px; padding: 10px; right: 10px; top: 70px; font-size: 0.75rem; }
+            .tutorial-title { font-size: 0.6rem; margin-bottom: 8px; }
+            .tutorial-task { font-size: 0.75rem; margin-bottom: 6px; gap: 5px; }
+
+            #resource-panel { font-size: 1rem; padding: 6px 12px; gap: 10px; }
+            .slot { width: 48px; height: 48px; }
+            .slot-icon { font-size: 20px; }
+            .slot-key { display: none; } /* Masquer numéros sur les cases */
+        }
     </style>
 </head>
 <body>
@@ -295,18 +315,18 @@
     <div id="ui-layer">
         <div id="hud-top">
             <div id="status-panel" class="panel">
-                <div style="font-size: 0.9rem; font-weight: bold; color: var(--text-muted); margin-bottom: -4px;">SANTÉ</div>
-                <div style="width: 100%; height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: -4px;">SANTÉ</div>
+                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                     <div id="ui-hp-bar" style="width: 100%; height: 100%; background: #e74c3c; transition: width 0.3s;"></div>
                 </div>
                 
-                <div style="font-size: 0.9rem; font-weight: bold; color: var(--text-muted); margin-bottom: -4px; margin-top: 4px;">FAIM</div>
-                <div style="width: 100%; height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: -4px; margin-top: 6px;">FAIM</div>
+                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                     <div id="ui-hunger-bar" style="width: 100%; height: 100%; background: #e67e22; transition: width 0.3s;"></div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
                 <button class="btn-icon" onclick="toggleMute()">
                     <span class="icon" id="icon-mute">🔊</span>
                     <span class="hint" id="ui-mute-key-hint">M</span>
@@ -326,11 +346,11 @@
         <div id="tutorial-panel" class="panel">
             <div class="tutorial-title">Objectifs :</div>
             <div class="tutorial-task" id="tut-hookDebris"><span class="check">⬜</span> 1. Ramasser un débris (grappin)</div>
-            <div class="tutorial-task" id="tut-platform"><span class="check">⬜</span> 2. Crafter et poser un plancher (clic 1 fois sur le HUD pour sélectionner, une 2nd pour craft)</div>
+            <div class="tutorial-task" id="tut-platform"><span class="check">⬜</span> 2. Poser un plancher (clic 2x pour craft)</div>
             <div class="tutorial-task" id="tut-table"><span class="check">⬜</span> 3. Créer une table de craft</div>
-            <div class="tutorial-task" id="tut-bowAndArrow"><span class="check">⬜</span> 4. Créer un arc et des flèches</div>
-            <div class="tutorial-task" id="tut-food"><span class="check">⬜</span> 5. Tuer un oiseau pour la viande</div>
-            <div class="tutorial-task" id="tut-eat"><span class="check">⬜</span> 6. Manger en cliquant sur le gigot</div>
+            <div class="tutorial-task" id="tut-bowAndArrow"><span class="check">⬜</span> 4. Créer un arc et flèches</div>
+            <div class="tutorial-task" id="tut-food"><span class="check">⬜</span> 5. Chasser un oiseau</div>
+            <div class="tutorial-task" id="tut-eat"><span class="check">⬜</span> 6. Manger le gigot en bas</div>
         </div>
 
         <div id="hotbar-container">
@@ -450,7 +470,6 @@
             <div class="close-icon" onclick="closeAllMenus()">✖</div>
         </div>
         <div class="modal-body">
-            <!-- Volume Musique -->
             <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
                 <div style="display: flex; justify-content: space-between; width: 100%;">
                     <h4>Volume de la Musique</h4>
@@ -459,32 +478,13 @@
                 <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.3" oninput="updateMusicVolume(this.value)">
             </div>
             
-            <!-- Keybindings -->
             <h4 style="margin: 10px 0 0 0; color: #f1c40f; text-align: center;">Raccourcis Clavier</h4>
-            <div class="setting-item">
-                <span>Avancer</span>
-                <button class="btn-keybind" id="bind-up" onclick="startRebind('up')">Z</button>
-            </div>
-            <div class="setting-item">
-                <span>Reculer</span>
-                <button class="btn-keybind" id="bind-down" onclick="startRebind('down')">S</button>
-            </div>
-            <div class="setting-item">
-                <span>Gauche</span>
-                <button class="btn-keybind" id="bind-left" onclick="startRebind('left')">Q</button>
-            </div>
-            <div class="setting-item">
-                <span>Droite</span>
-                <button class="btn-keybind" id="bind-right" onclick="startRebind('right')">D</button>
-            </div>
-            <div class="setting-item">
-                <span>Construire</span>
-                <button class="btn-keybind" id="bind-build" onclick="startRebind('build')">B</button>
-            </div>
-            <div class="setting-item">
-                <span>Couper son</span>
-                <button class="btn-keybind" id="bind-mute" onclick="startRebind('mute')">M</button>
-            </div>
+            <div class="setting-item"><span>Avancer</span><button class="btn-keybind" id="bind-up" onclick="startRebind('up')">Z</button></div>
+            <div class="setting-item"><span>Reculer</span><button class="btn-keybind" id="bind-down" onclick="startRebind('down')">S</button></div>
+            <div class="setting-item"><span>Gauche</span><button class="btn-keybind" id="bind-left" onclick="startRebind('left')">Q</button></div>
+            <div class="setting-item"><span>Droite</span><button class="btn-keybind" id="bind-right" onclick="startRebind('right')">D</button></div>
+            <div class="setting-item"><span>Construire</span><button class="btn-keybind" id="bind-build" onclick="startRebind('build')">B</button></div>
+            <div class="setting-item"><span>Couper son</span><button class="btn-keybind" id="bind-mute" onclick="startRebind('mute')">M</button></div>
 
             <hr style="border-color: rgba(255,255,255,0.1); margin: 5px 0;">
             <button class="btn-craft" style="background: var(--danger-color); box-shadow: 0 4px 0 #c0392b; width: 100%; display: flex; justify-content: center;" onclick="returnToTitle()">Retour à l'accueil</button>
@@ -505,7 +505,7 @@
         resizeCanvas();
 
         // --- VARIABLES ---
-        let gameState = 'START'; // START, PLAYING
+        let gameState = 'START'; 
 
         const WORLD_SPEED = 1; 
         const TILE_SIZE = 60;
@@ -542,7 +542,10 @@
         const keys = {}; 
         let isRebinding = null; 
 
+        // Variables pour la gestion Mixte Souris / Tactile
         const mouse = { x: 0, y: 0, isDown: false };
+        const vJoystick = { active: false, id: null, baseX: 0, baseY: 0, knobX: 0, knobY: 0, dirX: 0, dirY: 0, maxDist: 50 };
+        let actionTouchId = null;
         
         let clouds = [];
         let windLines = []; 
@@ -574,8 +577,10 @@
         function returnToTitle() {
             initAudio(); playSound('ui');
             closeAllMenus();
-            for (let k in keys) keys[k] = false; // Réinitialise les touches pour ne pas glisser
+            for (let k in keys) keys[k] = false; 
             mouse.isDown = false;
+            vJoystick.active = false;
+            actionTouchId = null;
             gameState = 'START';
             document.getElementById('ui-layer').style.display = 'none';
             document.getElementById('start-screen').style.display = 'flex';
@@ -806,15 +811,12 @@
                     el.querySelector('.check').innerText = '✅';
                 }
 
-                // Vérifier si toutes les étapes sont terminées
                 if (tutorialState.hookDebris && tutorialState.platform && tutorialState.table && tutorialState.bowAndArrow && tutorialState.food && tutorialState.eat) {
-                    // On attend un peu pour laisser le joueur voir la dernière validation
                     setTimeout(() => {
                         const panel = document.getElementById('tutorial-panel');
                         if (panel) {
                             panel.style.transition = 'opacity 1s ease';
                             panel.style.opacity = '0';
-                            // On retire complètement l'élément une fois le fondu terminé
                             setTimeout(() => panel.style.display = 'none', 1000);
                         }
                     }, 1500);
@@ -909,7 +911,6 @@
                 inventory.wood -= woodCost; inventory.scrap -= scrapCost;
                 if (item === 'platform') {
                     inventory.platforms += yieldAmount;
-                    // L'étape se valide désormais lors de la POSE du plancher, pas du craft
                 }
                 if (item === 'table') {
                     inventory.tables += yieldAmount;
@@ -1030,72 +1031,22 @@
             };
         }
 
-        // --- EVENTS ---
-        window.addEventListener('keydown', (e) => {
-            if (gameState !== 'PLAYING') return; 
-            
-            initAudio();
-            const keyLower = e.key.toLowerCase();
-            
-            if (isRebinding) {
-                e.preventDefault();
-                if (keyLower !== 'escape') {
-                    keyBinds[isRebinding] = keyLower;
-                    const btn = document.getElementById(`bind-${isRebinding}`);
-                    btn.classList.remove('listening');
-                    btn.innerText = keyLower === ' ' ? 'ESPACE' : keyLower.toUpperCase();
-                    isRebinding = null;
-                    updateUI(); 
+        // --- GESTION DES ACTIONS (Tirées de mouseup/touchend) ---
+        function executeAction() {
+            if (gameState !== 'PLAYING' || Object.values(menus).some(v => v)) return;
+
+            // Recalcul des hovers pour les clics/taps rapides
+            hoveredBuildTile = null; hoveredExistingTile = null;
+            if (activeTool === 'platform') {
+                let minDist = Infinity;
+                for (let b of getBuildableTiles()) {
+                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2);
+                    const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
+                    if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hoveredBuildTile = b; }
                 }
-                return;
+            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook') {
+                hoveredExistingTile = getHoveredExistingTile();
             }
-
-            keys[keyLower] = true;
-            keys[e.key] = true; 
-
-            if (keyLower === 'escape') {
-                if (Object.values(menus).some(v => v)) closeAllMenus(); 
-                else toggleMenu('settings');
-            }
-            
-            if (keyLower === keyBinds.mute && !e.repeat && !menus.settings) toggleMute();
-
-            if (keyLower === keyBinds.build && !e.repeat && !menus.settings) {
-                if (menus.advanced) closeAllMenus(); else toggleMenu('basic');
-            }
-
-            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow'];
-            const azertyKeys = ['&', 'é', '"', "'", '(', '-'];
-            
-            if (keyLower >= '1' && keyLower <= '6') {
-                setActiveTool(toolsList[parseInt(keyLower) - 1]);
-            } else if (azertyKeys.includes(keyLower)) {
-                setActiveTool(toolsList[azertyKeys.indexOf(keyLower)]);
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            const keyLower = e.key.toLowerCase();
-            keys[keyLower] = false;
-            keys[e.key] = false;
-        });
-
-        window.addEventListener('blur', () => {
-            for (let k in keys) keys[k] = false;
-            mouse.isDown = false;
-        });
-
-        canvas.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        
-        canvas.addEventListener('mousedown', (e) => { 
-            if (gameState !== 'PLAYING') return;
-            initAudio(); 
-            if (!Object.values(menus).some(v => v) && e.button === 0) mouse.isDown = true; 
-        });
-
-        canvas.addEventListener('mouseup', (e) => {
-            if (gameState !== 'PLAYING' || Object.values(menus).some(v => v) || e.button !== 0) return;
-            mouse.isDown = false;
 
             if (hoveredExistingTile && hoveredExistingTile.data.hasTable) {
                 const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
@@ -1106,7 +1057,7 @@
             else if (activeTool === 'platform' && hoveredBuildTile && inventory.platforms > 0) {
                 playSound('build');
                 inventory.platforms--; raftTiles.set(`${hoveredBuildTile.x},${hoveredBuildTile.y}`, { hasTable: false }); 
-                checkTutorial('platform'); // Etape 1 validée lors de la pose effective du plancher
+                checkTutorial('platform'); 
                 updateUI();
             }
             else if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && inventory.tables > 0) {
@@ -1145,7 +1096,139 @@
                 const pScreen = worldToScreen(player.x, player.y), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
                 projectiles.push({ x: pScreen.x, y: pScreen.y - 20, vx: Math.cos(angle) * 15, vy: Math.sin(angle) * 15, life: 60 });
             }
+        }
+
+        // --- EVENTS SOURIS/CLAVIER ---
+        window.addEventListener('keydown', (e) => {
+            if (gameState !== 'PLAYING') return; 
+            initAudio();
+            const keyLower = e.key.toLowerCase();
+            
+            if (isRebinding) {
+                e.preventDefault();
+                if (keyLower !== 'escape') {
+                    keyBinds[isRebinding] = keyLower;
+                    const btn = document.getElementById(`bind-${isRebinding}`);
+                    btn.classList.remove('listening');
+                    btn.innerText = keyLower === ' ' ? 'ESPACE' : keyLower.toUpperCase();
+                    isRebinding = null;
+                    updateUI(); 
+                }
+                return;
+            }
+
+            keys[keyLower] = true; keys[e.key] = true; 
+
+            if (keyLower === 'escape') {
+                if (Object.values(menus).some(v => v)) closeAllMenus(); 
+                else toggleMenu('settings');
+            }
+            if (keyLower === keyBinds.mute && !e.repeat && !menus.settings) toggleMute();
+            if (keyLower === keyBinds.build && !e.repeat && !menus.settings) {
+                if (menus.advanced) closeAllMenus(); else toggleMenu('basic');
+            }
+
+            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow'];
+            const azertyKeys = ['&', 'é', '"', "'", '(', '-'];
+            if (keyLower >= '1' && keyLower <= '6') setActiveTool(toolsList[parseInt(keyLower) - 1]);
+            else if (azertyKeys.includes(keyLower)) setActiveTool(toolsList[azertyKeys.indexOf(keyLower)]);
         });
+
+        window.addEventListener('keyup', (e) => {
+            const keyLower = e.key.toLowerCase();
+            keys[keyLower] = false; keys[e.key] = false;
+        });
+
+        window.addEventListener('blur', () => {
+            for (let k in keys) keys[k] = false;
+            mouse.isDown = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        
+        canvas.addEventListener('mousedown', (e) => { 
+            if (gameState !== 'PLAYING') return;
+            initAudio(); 
+            if (!Object.values(menus).some(v => v) && e.button === 0) mouse.isDown = true; 
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (gameState !== 'PLAYING' || Object.values(menus).some(v => v) || e.button !== 0) return;
+            mouse.isDown = false;
+            executeAction();
+        });
+
+        // --- EVENTS TACTILES (MOBILE) ---
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault(); // Empêche le zoom/scroll
+            initAudio();
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                let touch = e.changedTouches[i];
+                // Moitié Gauche : Joystick
+                if (touch.clientX < canvas.width / 2 && !vJoystick.active) {
+                    vJoystick.active = true;
+                    vJoystick.id = touch.identifier;
+                    vJoystick.baseX = touch.clientX;
+                    vJoystick.baseY = touch.clientY;
+                    vJoystick.knobX = touch.clientX;
+                    vJoystick.knobY = touch.clientY;
+                } 
+                // Moitié Droite : Action
+                else if (!actionTouchId && !Object.values(menus).some(v => v)) {
+                    actionTouchId = touch.identifier;
+                    mouse.x = touch.clientX;
+                    mouse.y = touch.clientY;
+                    mouse.isDown = true;
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault();
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                let touch = e.changedTouches[i];
+                if (vJoystick.active && touch.identifier === vJoystick.id) {
+                    let dx = touch.clientX - vJoystick.baseX;
+                    let dy = touch.clientY - vJoystick.baseY;
+                    let dist = Math.hypot(dx, dy);
+                    if (dist > vJoystick.maxDist) {
+                        dx = (dx / dist) * vJoystick.maxDist;
+                        dy = (dy / dist) * vJoystick.maxDist;
+                    }
+                    vJoystick.knobX = vJoystick.baseX + dx;
+                    vJoystick.knobY = vJoystick.baseY + dy;
+                    vJoystick.dirX = dx / vJoystick.maxDist;
+                    vJoystick.dirY = dy / vJoystick.maxDist;
+                } else if (touch.identifier === actionTouchId) {
+                    mouse.x = touch.clientX;
+                    mouse.y = touch.clientY;
+                }
+            }
+        }, { passive: false });
+
+        function handleTouchEnd(e) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                let touch = e.changedTouches[i];
+                if (vJoystick.active && touch.identifier === vJoystick.id) {
+                    vJoystick.active = false;
+                    vJoystick.id = null;
+                    vJoystick.dirX = 0;
+                    vJoystick.dirY = 0;
+                } else if (touch.identifier === actionTouchId) {
+                    actionTouchId = null;
+                    mouse.isDown = false;
+                    executeAction();
+                }
+            }
+        }
+
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
 
         function fireHook() {
             playSound('throw');
@@ -1162,7 +1245,6 @@
 
         // --- UPDATE ---
         function update() {
-            // 1. Mise à jour de l'arrière-plan même en Pause / Ecran d'accueil
             for (let i = clouds.length - 1; i >= 0; i--) {
                 let c = clouds[i]; c.x -= (WORLD_SPEED + c.speedOffset); c.y += (WORLD_SPEED + c.speedOffset) * 0.5;
                 if (c.x < -400 || c.y > canvas.height + 400) clouds.splice(i, 1);
@@ -1181,7 +1263,6 @@
                 windLines.push(createWind(p.x, p.y));
             }
 
-            // Bloque la mise à jour des éléments de jeu si en pause/menu
             if (gameState === 'START' || Object.values(menus).some(v => v)) return; 
 
             if (player.hunger > 0) {
@@ -1204,12 +1285,19 @@
             if (player.actionTimer > 0) player.actionTimer--; else player.currentAction = 'none';
 
             let dx = 0, dy = 0;
-            if (keys[keyBinds.up] || keys['arrowup']) dy -= PLAYER_SPEED;
-            if (keys[keyBinds.down] || keys['arrowdown']) dy += PLAYER_SPEED;
-            if (keys[keyBinds.left] || keys['arrowleft']) dx -= PLAYER_SPEED;
-            if (keys[keyBinds.right] || keys['arrowright']) dx += PLAYER_SPEED;
 
-            if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx * dx + dy * dy); dx = (dx / len) * PLAYER_SPEED; dy = (dy / len) * PLAYER_SPEED; }
+            // Déplacement (Priorité au Joystick sur mobile)
+            if (vJoystick.active) {
+                dx = vJoystick.dirX * PLAYER_SPEED;
+                dy = vJoystick.dirY * PLAYER_SPEED;
+            } else {
+                if (keys[keyBinds.up] || keys['arrowup']) dy -= PLAYER_SPEED;
+                if (keys[keyBinds.down] || keys['arrowdown']) dy += PLAYER_SPEED;
+                if (keys[keyBinds.left] || keys['arrowleft']) dx -= PLAYER_SPEED;
+                if (keys[keyBinds.right] || keys['arrowright']) dx += PLAYER_SPEED;
+
+                if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx * dx + dy * dy); dx = (dx / len) * PLAYER_SPEED; dy = (dy / len) * PLAYER_SPEED; }
+            }
             
             player.isMoving = (dx !== 0 || dy !== 0);
             if (player.isMoving) {
@@ -1385,12 +1473,13 @@
                     hook.state = 'IDLE';
                     if (hook.caughtDebris.length > 0) { 
                         for (let d of hook.caughtDebris) { inventory[d.type]++; debrisList = debrisList.filter(deb => deb !== d); }
-                        checkTutorial('hookDebris'); // Validation de la nouvelle étape
+                        checkTutorial('hookDebris'); 
                         updateUI(); hook.caughtDebris = []; 
                     }
                 } else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
             }
 
+            // Gestion de l'hologramme de construction tactile vs souris
             hoveredBuildTile = null; hoveredExistingTile = null;
             if (activeTool === 'platform') {
                 let minDist = Infinity;
@@ -1583,7 +1672,6 @@
                 ctx.stroke();
             }
 
-            // Ne pas afficher les UI / Joueur sur l'écran d'accueil
             if (gameState === 'START') return;
 
             for (let d of debrisList) {
@@ -1656,6 +1744,15 @@
                 
                 drawPoly([{x:b.x, y:b.y}, {x:b.x - 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color1);
                 drawPoly([{x:b.x, y:b.y}, {x:b.x + 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color2);
+            }
+
+            // Dessin du Joystick Virtuel (Mobile)
+            if (vJoystick.active) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath(); ctx.arc(vJoystick.baseX, vJoystick.baseY, vJoystick.maxDist, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath(); ctx.arc(vJoystick.knobX, vJoystick.knobY, vJoystick.maxDist / 2, 0, Math.PI*2); ctx.fill();
             }
         }
 
