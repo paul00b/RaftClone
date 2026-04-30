@@ -325,11 +325,12 @@
         <!-- TUTORIEL TO-DO LIST -->
         <div id="tutorial-panel" class="panel">
             <div class="tutorial-title">Objectifs :</div>
-            <div class="tutorial-task" id="tut-platform"><span class="check">⬜</span> 1. Crafter et poser un plancher</div>
-            <div class="tutorial-task" id="tut-table"><span class="check">⬜</span> 2. Créer une table de craft</div>
-            <div class="tutorial-task" id="tut-bowAndArrow"><span class="check">⬜</span> 3. Créer un arc et des flèches</div>
-            <div class="tutorial-task" id="tut-food"><span class="check">⬜</span> 4. Tuer un oiseau pour la viande</div>
-            <div class="tutorial-task" id="tut-eat"><span class="check">⬜</span> 5. Manger en cliquant sur le gigot</div>
+            <div class="tutorial-task" id="tut-hookDebris"><span class="check">⬜</span> 1. Ramasser un débris (grappin)</div>
+            <div class="tutorial-task" id="tut-platform"><span class="check">⬜</span> 2. Crafter et poser un plancher (clic 1 fois sur le HUD pour sélectionner, une 2nd pour craft)</div>
+            <div class="tutorial-task" id="tut-table"><span class="check">⬜</span> 3. Créer une table de craft</div>
+            <div class="tutorial-task" id="tut-bowAndArrow"><span class="check">⬜</span> 4. Créer un arc et des flèches</div>
+            <div class="tutorial-task" id="tut-food"><span class="check">⬜</span> 5. Tuer un oiseau pour la viande</div>
+            <div class="tutorial-task" id="tut-eat"><span class="check">⬜</span> 6. Manger en cliquant sur le gigot</div>
         </div>
 
         <div id="hotbar-container">
@@ -515,7 +516,7 @@
         
         let menus = { basic: false, advanced: false, settings: false };
 
-        const tutorialState = { platform: false, table: false, bowAndArrow: false, food: false, eat: false };
+        const tutorialState = { hookDebris: false, platform: false, table: false, bowAndArrow: false, food: false, eat: false };
 
         let raftTiles = new Map();
         raftTiles.set('0,0', { hasTable: false }); 
@@ -790,6 +791,7 @@
         function checkTutorial(task) {
             if (tutorialState[task]) return;
 
+            if (task === 'hookDebris') tutorialState.hookDebris = true;
             if (task === 'platform') tutorialState.platform = true;
             if (task === 'table') tutorialState.table = true;
             if (task === 'bowAndArrow' && unlockedTools.bow && inventory.arrows > 0) tutorialState.bowAndArrow = true;
@@ -802,6 +804,20 @@
                 if (el) {
                     el.classList.add('done');
                     el.querySelector('.check').innerText = '✅';
+                }
+
+                // Vérifier si toutes les étapes sont terminées
+                if (tutorialState.hookDebris && tutorialState.platform && tutorialState.table && tutorialState.bowAndArrow && tutorialState.food && tutorialState.eat) {
+                    // On attend un peu pour laisser le joueur voir la dernière validation
+                    setTimeout(() => {
+                        const panel = document.getElementById('tutorial-panel');
+                        if (panel) {
+                            panel.style.transition = 'opacity 1s ease';
+                            panel.style.opacity = '0';
+                            // On retire complètement l'élément une fois le fondu terminé
+                            setTimeout(() => panel.style.display = 'none', 1000);
+                        }
+                    }, 1500);
                 }
             }
         }
@@ -1369,6 +1385,7 @@
                     hook.state = 'IDLE';
                     if (hook.caughtDebris.length > 0) { 
                         for (let d of hook.caughtDebris) { inventory[d.type]++; debrisList = debrisList.filter(deb => deb !== d); }
+                        checkTutorial('hookDebris'); // Validation de la nouvelle étape
                         updateUI(); hook.caughtDebris = []; 
                     }
                 } else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
