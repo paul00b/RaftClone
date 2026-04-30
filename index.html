@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyRaft - Prototype Crafting</title>
+    <style>
+        /* --- CSS VARIABLES (THEMING) --- */
+        :root {
+            --bg-glass: rgba(25, 35, 45, 0.75);
+            --bg-glass-hover: rgba(35, 50, 65, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.15);
+            --accent-color: #e67e22;
+            --accent-hover: #d35400;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --text-main: #ecf0f1;
+            --text-muted: #bdc3c7;
+            --ui-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #74b9ff; /* Ciel un peu plus vif */
+            height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            color: var(--text-main);
+        }
+        
+        canvas {
+            display: block; 
+        }
+        
+        /* --- UI GLOBAL --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            box-shadow: var(--ui-shadow);
+            pointer-events: auto;
+        }
+
+        /* --- HUD TOP --- */
+        #hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            align-items: flex-start;
+        }
+
+        #resource-panel {
+            padding: 12px 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-main {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--accent-hover), 0 5px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--accent-hover), 0 8px 15px rgba(0,0,0,0.4); }
+        .btn-main:active { transform: translateY(4px); box-shadow: 0 0 0 var(--accent-hover); }
+
+        /* --- HOTBAR --- */
+        #hotbar-container { display: flex; justify-content: center; padding-bottom: 25px; }
+        #hotbar { display: flex; gap: 8px; padding: 8px; }
+
+        .slot {
+            width: 64px; height: 64px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .slot:hover:not(.locked) { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-5px); }
+        .slot.active {
+            border-color: #f1c40f; background: rgba(241, 196, 15, 0.2);
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4), inset 0 0 10px rgba(0,0,0,0.5); transform: translateY(-10px);
+        }
+        .slot.locked { opacity: 0.3; filter: grayscale(100%); cursor: not-allowed; }
+
+        .slot-icon { font-size: 28px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
+        
+        .slot-key {
+            position: absolute; top: -8px; left: -8px; background: #f1c40f; color: #2c3e50;
+            width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; border: 2px solid #2c3e50; box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .slot-qty {
+            position: absolute; bottom: 2px; right: 4px; font-size: 12px; font-weight: bold;
+            text-shadow: 1px 1px 2px black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
+        }
+
+        /* --- MODALS --- */
+        #menu-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); pointer-events: auto; z-index: 10;
+        }
+
+        .modal {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; z-index: 11; pointer-events: auto;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 0; overflow: hidden;
+        }
+
+        @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, -45%) scale(0.9); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
+        .modal-header { background: rgba(0, 0, 0, 0.3); padding: 15px 20px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; color: #f1c40f; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-size: 1.4rem; }
+        .close-icon { cursor: pointer; font-size: 1.5rem; color: var(--text-muted); transition: color 0.2s; }
+        .close-icon:hover { color: var(--danger-color); }
+
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+
+        .craft-item {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            padding: 12px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;
+        }
+        .craft-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .craft-info { display: flex; align-items: center; gap: 12px; }
+        .craft-icon {
+            font-size: 2rem; background: rgba(0,0,0,0.3); width: 48px; height: 48px;
+            display: flex; justify-content: center; align-items: center; border-radius: 8px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        .craft-details h4 { margin: 0 0 5px 0; font-size: 1.1rem; }
+        .craft-cost { display: flex; gap: 6px; }
+        .cost-pill {
+            background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;
+            display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .btn-craft {
+            background: var(--success-color); color: white; border: none; padding: 10px 16px; border-radius: 6px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #27ae60; transition: all 0.1s;
+        }
+        .btn-craft:hover:not(:disabled) { background: #2ecc71; transform: translateY(-2px); box-shadow: 0 5px 0 #27ae60; }
+        .btn-craft:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 #27ae60; }
+        .btn-craft:disabled { background: #7f8c8d; box-shadow: 0 3px 0 #34495e; cursor: not-allowed; opacity: 0.7;}
+
+    </style>
+</head>
+<body>
+
+    <div id="menu-overlay" onclick="closeAllMenus()"></div>
+
+    <div id="ui-layer">
+        <div id="hud-top">
+            <div id="resource-panel" class="panel">
+                <div class="resource-item">🪵 <span id="ui-wood">50</span></div>
+                <div class="resource-item">🔩 <span id="ui-scrap">20</span></div>
+            </div>
+            <button class="btn-main" onclick="toggleMenu('basic')">
+                🪚 Construire <span style="font-size: 0.8rem; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px;">B</span>
+            </button>
+        </div>
+
+        <div id="hotbar-container">
+            <div id="hotbar" class="panel">
+                <div class="slot active" id="slot-1" onclick="setActiveTool('hook')">
+                    <div class="slot-key">1</div><div class="slot-icon">🪝</div>
+                </div>
+                <div class="slot" id="slot-2" onclick="setActiveTool('platform')">
+                    <div class="slot-key">2</div><div class="slot-icon">🟫</div><div class="slot-qty" id="ui-plat">0</div>
+                </div>
+                <div class="slot" id="slot-3" onclick="setActiveTool('table')">
+                    <div class="slot-key">3</div><div class="slot-icon">🧰</div><div class="slot-qty" id="ui-tab">0</div>
+                </div>
+                <div class="slot locked" id="slot-4" onclick="setActiveTool('axe')">
+                    <div class="slot-key">4</div><div class="slot-icon">🪓</div>
+                </div>
+                <div class="slot locked" id="slot-5" onclick="setActiveTool('spear')">
+                    <div class="slot-key">5</div><div class="slot-icon">🔱</div>
+                </div>
+                <div class="slot locked" id="slot-6" onclick="setActiveTool('bow')">
+                    <div class="slot-key">6</div><div class="slot-icon">🏹</div><div class="slot-qty" id="ui-arr">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menus (Identique au précédent) -->
+    <div id="basic-menu" class="panel modal">
+        <div class="modal-header">
+            <h3>🪚 Plan de Construction</h3>
+            <div class="close-icon" onclick="closeAllMenus()">✖</div>
+        </div>
+        <div class="modal-body">
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🟫</div>
+                    <div class="craft-details">
+                        <h4>Plancher en bois</h4>
+                        <div class="craft-cost"><span class="cost-pill">2 🪵</span> <span class="cost-pill">1 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" onclick="craft('platform', 2, 1)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🧰</div>
+                    <div class="craft-details">
+                        <h4>Table d'Artisanat</h4>
+                        <div class="craft-cost"><span class="cost-pill">5 🪵</span> <span class="cost-pill">3 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" onclick="craft('table', 5, 3)">Fabriquer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="advanced-menu" class="panel modal">
+        <div class="modal-header">
+            <h3>🧰 Établi d'Artisanat</h3>
+            <div class="close-icon" onclick="closeAllMenus()">✖</div>
+        </div>
+        <div class="modal-body">
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🪓</div>
+                    <div class="craft-details">
+                        <h4>Hache</h4>
+                        <div class="craft-cost"><span class="cost-pill">3 🪵</span> <span class="cost-pill">2 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" id="btn-craft-axe" onclick="craftTool('axe', 3, 2)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🔱</div>
+                    <div class="craft-details">
+                        <h4>Lance de combat</h4>
+                        <div class="craft-cost"><span class="cost-pill">4 🪵</span> <span class="cost-pill">1 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" id="btn-craft-spear" onclick="craftTool('spear', 4, 1)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🏹</div>
+                    <div class="craft-details">
+                        <h4>Arc de chasse</h4>
+                        <div class="craft-cost"><span class="cost-pill">3 🪵</span> <span class="cost-pill">2 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" id="btn-craft-bow" onclick="craftTool('bow', 3, 2)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🎯</div>
+                    <div class="craft-details">
+                        <h4>Flèches (x3)</h4>
+                        <div class="craft-cost"><span class="cost-pill">1 🪵</span> <span class="cost-pill">1 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" onclick="craft('arrows', 1, 1, 3)">Fabriquer</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- VARIABLES ---
+        const WORLD_SPEED = 2;
+        const TILE_SIZE = 60;
+        
+        const inventory = { wood: 50, scrap: 20, platforms: 0, tables: 0, arrows: 0 };
+        const unlockedTools = { axe: false, spear: false, bow: false };
+        let activeTool = 'hook'; 
+        
+        let menus = { basic: false, advanced: false };
+
+        let raftTiles = new Map();
+        // On commence avec un radeau 2x2 pour admirer les textures
+        raftTiles.set('0,0', { hasTable: false }); 
+        raftTiles.set('1,0', { hasTable: false }); 
+        raftTiles.set('0,1', { hasTable: false }); 
+        raftTiles.set('1,1', { hasTable: false }); 
+        
+        let hoveredBuildTile = null; 
+        let hoveredExistingTile = null;
+        
+        const PLAYER_SPEED = 2.2; // Vitesse réduite pour plus de réalisme
+        const player = {
+            x: TILE_SIZE, y: TILE_SIZE, width: 16, height: 35,
+            actionTimer: 0, currentAction: 'none',
+            walkAnim: 0, isMoving: false // Nouvelles variables pour l'animation
+        };
+
+        const keys = { z: false, q: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        const mouse = { x: 0, y: 0, isDown: false };
+        
+        let clouds = [];
+        let windLines = []; // NOUVEAU : Effets de vent
+        let debrisList = [];
+        let projectiles = [];
+        
+        const hook = {
+            state: 'IDLE', charge: 0, maxCharge: 400, chargeRate: 6,
+            x: 0, y: 0, targetX: 0, targetY: 0, speed: 12, caughtDebris: null
+        };
+
+        const manta = {
+            state: 'COOLDOWN', x: 0, y: 0, targetTile: null,
+            hp: 3, maxHp: 3, timer: 0, maxTimer: 900, cooldown: 900, speed: 2
+        };
+
+        // --- UI LOGIC ---
+        function updateUI() {
+            document.getElementById('ui-wood').innerText = inventory.wood;
+            document.getElementById('ui-scrap').innerText = inventory.scrap;
+            document.getElementById('ui-plat').innerText = inventory.platforms > 0 ? inventory.platforms : '';
+            document.getElementById('ui-tab').innerText = inventory.tables > 0 ? inventory.tables : '';
+            document.getElementById('ui-arr').innerText = inventory.arrows > 0 ? inventory.arrows : '';
+            
+            if (unlockedTools.axe) document.getElementById('slot-4').classList.remove('locked');
+            if (unlockedTools.spear) document.getElementById('slot-5').classList.remove('locked');
+            if (unlockedTools.bow) document.getElementById('slot-6').classList.remove('locked');
+        }
+
+        function toggleMenu(menuName) {
+            const overlay = document.getElementById('menu-overlay');
+            if (menuName === 'basic' && menus.advanced) { menus.advanced = false; document.getElementById('advanced-menu').style.display = 'none'; }
+            if (menuName === 'advanced' && menus.basic) { menus.basic = false; document.getElementById('basic-menu').style.display = 'none'; }
+            
+            menus[menuName] = !menus[menuName];
+            document.getElementById(`${menuName}-menu`).style.display = menus[menuName] ? 'block' : 'none';
+            overlay.style.display = (menus.basic || menus.advanced) ? 'block' : 'none';
+        }
+
+        function closeAllMenus() {
+            menus.basic = false; menus.advanced = false;
+            document.getElementById('basic-menu').style.display = 'none';
+            document.getElementById('advanced-menu').style.display = 'none';
+            document.getElementById('menu-overlay').style.display = 'none';
+        }
+
+        function craft(item, woodCost, scrapCost, yieldAmount = 1) {
+            if (inventory.wood >= woodCost && inventory.scrap >= scrapCost) {
+                inventory.wood -= woodCost; inventory.scrap -= scrapCost;
+                if (item === 'platform') inventory.platforms += yieldAmount;
+                if (item === 'table') inventory.tables += yieldAmount;
+                if (item === 'arrows') inventory.arrows += yieldAmount;
+                updateUI();
+            }
+        }
+
+        function craftTool(tool, woodCost, scrapCost) {
+            if (!unlockedTools[tool] && inventory.wood >= woodCost && inventory.scrap >= scrapCost) {
+                inventory.wood -= woodCost; inventory.scrap -= scrapCost; unlockedTools[tool] = true;
+                document.getElementById(`btn-craft-${tool}`).innerText = "Acquis"; document.getElementById(`btn-craft-${tool}`).disabled = true;
+                updateUI();
+            }
+        }
+
+        function setActiveTool(tool) {
+            if ((tool === 'axe' || tool === 'spear' || tool === 'bow') && !unlockedTools[tool]) return;
+            activeTool = tool; hook.state = 'IDLE'; hook.charge = 0; 
+            document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+            let slotIds = { 'hook': 1, 'platform': 2, 'table': 3, 'axe': 4, 'spear': 5, 'bow': 6 };
+            document.getElementById(`slot-${slotIds[tool]}`).classList.add('active');
+        }
+
+        // --- MATH ISOMETRIQUE & GRILLE ---
+        function worldToScreen(x, y) {
+            const isoX = x - y;
+            const isoY = (x + y) / 2;
+            return { x: canvas.width / 2 + isoX, y: canvas.height / 2 + isoY - (TILE_SIZE / 2) };
+        }
+
+        function getBuildableTiles() {
+            let buildable = new Set();
+            raftTiles.forEach((data, tileStr) => {
+                let [gx, gy] = tileStr.split(',').map(Number);
+                let neighbors = [`${gx+1},${gy}`, `${gx-1},${gy}`, `${gx},${gy+1}`, `${gx},${gy-1}`];
+                neighbors.forEach(n => { if (!raftTiles.has(n)) buildable.add(n); });
+            });
+            return Array.from(buildable).map(t => { let [gx, gy] = t.split(',').map(Number); return {x: gx, y: gy}; });
+        }
+
+        function getPeripheralTiles() {
+            let peripherals = [];
+            raftTiles.forEach((data, tileStr) => {
+                let [gx, gy] = tileStr.split(',').map(Number);
+                let neighbors = [`${gx+1},${gy}`, `${gx-1},${gy}`, `${gx},${gy+1}`, `${gx},${gy-1}`];
+                if (neighbors.some(n => !raftTiles.has(n))) peripherals.push({x: gx, y: gy, key: tileStr});
+            });
+            return peripherals;
+        }
+
+        function getHoveredExistingTile() {
+            let minDist = Infinity; let hovered = null;
+            for (let [key, data] of raftTiles.entries()) {
+                let [gx, gy] = key.split(',').map(Number);
+                const screenC = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2);
+                const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
+                if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hovered = {x: gx, y: gy, key: key, data: data}; }
+            }
+            return hovered;
+        }
+
+        // --- EVENTS ---
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(key)) keys[key === e.key ? e.key : key] = true;
+            
+            if (key === 'b' && !e.repeat) {
+                if (menus.advanced) closeAllMenus(); else toggleMenu('basic');
+            }
+            if (key === 'escape') closeAllMenus();
+
+            if (key >= '1' && key <= '6') {
+                const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow']; setActiveTool(toolsList[parseInt(key) - 1]);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (keys.hasOwnProperty(e.key) || keys.hasOwnProperty(key)) keys[key === e.key ? e.key : key] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        canvas.addEventListener('mousedown', (e) => { if (!menus.basic && !menus.advanced && e.button === 0) mouse.isDown = true; });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (menus.basic || menus.advanced || e.button !== 0) return;
+            mouse.isDown = false;
+
+            if (hoveredExistingTile && hoveredExistingTile.data.hasTable) {
+                const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
+                if (Math.abs(pTileX - hoveredExistingTile.x) <= 1 && Math.abs(pTileY - hoveredExistingTile.y) <= 1) { toggleMenu('advanced'); return; }
+            }
+
+            if (activeTool === 'hook' && hook.state === 'CHARGING') fireHook();
+            else if (activeTool === 'platform' && hoveredBuildTile && inventory.platforms > 0) {
+                inventory.platforms--; raftTiles.set(`${hoveredBuildTile.x},${hoveredBuildTile.y}`, { hasTable: false }); updateUI();
+            }
+            else if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && inventory.tables > 0) {
+                inventory.tables--; hoveredExistingTile.data.hasTable = true; updateUI();
+            }
+            else if (activeTool === 'axe' && hoveredExistingTile) {
+                const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
+                if (!(pTileX === hoveredExistingTile.x && pTileY === hoveredExistingTile.y) && raftTiles.size > 1) raftTiles.delete(hoveredExistingTile.key);
+            }
+            else if (activeTool === 'spear') {
+                player.currentAction = 'spear'; player.actionTimer = 15; 
+                if (manta.state === 'ATTACHED' || manta.state === 'APPROACHING') {
+                    const pScreen = worldToScreen(player.x, player.y), mScreen = worldToScreen(manta.x, manta.y);
+                    if (Math.hypot(pScreen.x - mScreen.x, pScreen.y - mScreen.y) < 100) { manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; }
+                }
+            }
+            else if (activeTool === 'bow' && inventory.arrows > 0) {
+                inventory.arrows--; updateUI();
+                const pScreen = worldToScreen(player.x, player.y), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
+                projectiles.push({ x: pScreen.x, y: pScreen.y - 20, vx: Math.cos(angle) * 15, vy: Math.sin(angle) * 15, life: 60 });
+            }
+        });
+
+        function fireHook() {
+            hook.state = 'THROWN';
+            const pScreen = worldToScreen(player.x, player.y), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
+            const dist = Math.max(50, hook.charge);
+            hook.targetX = pScreen.x + Math.cos(angle) * dist; hook.targetY = pScreen.y + Math.sin(angle) * dist;
+            hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = 0;
+        }
+
+        // INIT ENVIRONMENT
+        for(let i=0; i<15; i++) clouds.push({ x: Math.random() * 2000 - 500, y: Math.random() * 2000 - 500, size: Math.random() * 50 + 30, speedOffset: Math.random() * 0.5 });
+        for(let i=0; i<10; i++) windLines.push({ x: Math.random() * 2000 - 500, y: Math.random() * 2000 - 500, length: Math.random() * 100 + 50, speed: WORLD_SPEED * (Math.random() * 1.5 + 1.5) });
+
+        // --- UPDATE ---
+        function update() {
+            if (menus.basic || menus.advanced) return; 
+
+            if (player.actionTimer > 0) player.actionTimer--; else player.currentAction = 'none';
+
+            // Mouvement
+            let dx = 0, dy = 0;
+            if (keys.z || keys.ArrowUp) dy -= PLAYER_SPEED;
+            if (keys.s || keys.ArrowDown) dy += PLAYER_SPEED;
+            if (keys.q || keys.ArrowLeft) dx -= PLAYER_SPEED;
+            if (keys.d || keys.ArrowRight) dx += PLAYER_SPEED;
+
+            if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx * dx + dy * dy); dx = (dx / len) * PLAYER_SPEED; dy = (dy / len) * PLAYER_SPEED; }
+            
+            // Animation de marche
+            player.isMoving = (dx !== 0 || dy !== 0);
+            if (player.isMoving) player.walkAnim++;
+            else player.walkAnim = 0;
+
+            player.x += dx; player.y += dy;
+
+            const gridX = Math.floor(player.x / TILE_SIZE), gridY = Math.floor(player.y / TILE_SIZE);
+            if (!raftTiles.has(`${gridX},${gridY}`)) {
+                const tX = Math.floor((player.x - dx) / TILE_SIZE), tY = Math.floor((player.y - dy) / TILE_SIZE);
+                if (raftTiles.has(`${gridX},${tY}`)) { player.x -= dx; player.y -= dy; } 
+                else if (raftTiles.has(`${tX},${gridY}`)) player.x -= dx;
+                else if (raftTiles.has(`${gridX},${tY}`)) player.y -= dy;
+                else { player.x -= dx; player.y -= dy; }
+            }
+
+            // Environnement
+            for (let i = clouds.length - 1; i >= 0; i--) {
+                let c = clouds[i]; c.x -= (WORLD_SPEED + c.speedOffset); c.y += (WORLD_SPEED + c.speedOffset) * 0.5;
+                if (c.x < -200 || c.y > canvas.height + 200) clouds.splice(i, 1);
+            }
+            if (Math.random() < 0.05) clouds.push({ x: Math.random() * (canvas.width+800) - 400, y: -400, size: Math.random() * 50 + 30, speedOffset: Math.random() * 0.5 });
+
+            for (let i = windLines.length - 1; i >= 0; i--) {
+                let w = windLines[i]; w.x -= w.speed; w.y += w.speed * 0.5;
+                if (w.x < -200 || w.y > canvas.height + 200) windLines.splice(i, 1);
+            }
+            if (Math.random() < 0.1) windLines.push({ x: Math.random() * (canvas.width+800) - 200, y: -400, length: Math.random() * 100 + 50, speed: WORLD_SPEED * (Math.random() * 1.5 + 1.5) });
+
+            // Débris
+            if (Math.random() < 0.015) debrisList.push({ x: (Math.random() * 1600) - 800, y: -800, type: Math.random() > 0.6 ? 'wood' : 'scrap', isHooked: false, rot: Math.random() });
+            for (let i = debrisList.length - 1; i >= 0; i--) {
+                let d = debrisList[i];
+                if (!d.isHooked) { d.y += WORLD_SPEED; if (d.y > 1500) debrisList.splice(i, 1); }
+            }
+
+            // Flèches
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i]; p.x += p.vx; p.y += p.vy; p.life--;
+                if (manta.state === 'APPROACHING' || manta.state === 'ATTACHED') {
+                    const mScreen = worldToScreen(manta.x, manta.y);
+                    if (Math.hypot(p.x - mScreen.x, p.y - mScreen.y) < 50) { manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; projectiles.splice(i, 1); continue; }
+                }
+                if (p.life <= 0) projectiles.splice(i, 1);
+            }
+
+            // Manta
+            if (manta.state === 'COOLDOWN') {
+                manta.cooldown--;
+                if (manta.cooldown <= 0 && raftTiles.size > 1) { 
+                    let edges = getPeripheralTiles();
+                    if (edges.length > 0) {
+                        manta.targetTile = edges[Math.floor(Math.random() * edges.length)];
+                        manta.x = (manta.targetTile.x * TILE_SIZE) - 800; manta.y = (manta.targetTile.y * TILE_SIZE) + 800;
+                        manta.state = 'APPROACHING'; manta.hp = manta.maxHp; manta.timer = 0;
+                    }
+                }
+            } else if (manta.state === 'APPROACHING') {
+                const targetX = manta.targetTile.x * TILE_SIZE + TILE_SIZE/2, targetY = manta.targetTile.y * TILE_SIZE + TILE_SIZE/2;
+                const dx = targetX - manta.x, dy = targetY - manta.y, dist = Math.hypot(dx, dy);
+                if (dist < 10) manta.state = 'ATTACHED'; else { manta.x += (dx/dist) * manta.speed; manta.y += (dy/dist) * manta.speed; }
+            } else if (manta.state === 'ATTACHED') {
+                if (!raftTiles.has(manta.targetTile.key)) manta.state = 'FLEEING'; 
+                else {
+                    manta.timer++;
+                    if (manta.timer >= manta.maxTimer) {
+                        raftTiles.delete(manta.targetTile.key); manta.state = 'FLEEING';
+                        const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
+                        if (`${pTileX},${pTileY}` === manta.targetTile.key) {
+                            let firstTile = Array.from(raftTiles.keys())[0].split(',').map(Number);
+                            player.x = firstTile[0] * TILE_SIZE + TILE_SIZE/2; player.y = firstTile[1] * TILE_SIZE + TILE_SIZE/2;
+                        }
+                    }
+                }
+            } else if (manta.state === 'FLEEING') {
+                manta.x -= manta.speed * 3; manta.y += manta.speed * 3; 
+                if (manta.x < -1500 || manta.y > 1500) { manta.state = 'COOLDOWN'; manta.cooldown = 1200 + Math.random() * 1200; }
+            }
+
+            // Grappin
+            const pScreen = worldToScreen(player.x, player.y);
+            if (activeTool === 'hook') {
+                if (hook.state === 'IDLE') {
+                    hook.x = pScreen.x; hook.y = pScreen.y; if (mouse.isDown) hook.state = 'CHARGING';
+                } else if (hook.state === 'CHARGING') {
+                    hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = Math.min(hook.charge + hook.chargeRate, hook.maxCharge);
+                }
+            } else { if(hook.state === 'CHARGING') { hook.state = 'IDLE'; hook.charge = 0; } }
+
+            if (hook.state === 'THROWN') {
+                const dx = hook.targetX - hook.x, dy = hook.targetY - hook.y, dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < hook.speed) hook.state = 'RETRACTING'; else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
+                for (let d of debrisList) {
+                    if (d.isHooked) continue;
+                    const screenD = worldToScreen(d.x, d.y);
+                    if (Math.hypot(hook.x - screenD.x, hook.y - screenD.y) < 30) { hook.caughtDebris = d; d.isHooked = true; hook.state = 'RETRACTING'; break; }
+                }
+            } else if (hook.state === 'RETRACTING') {
+                const dx = pScreen.x - hook.x, dy = pScreen.y - hook.y, dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < hook.speed) {
+                    hook.state = 'IDLE';
+                    if (hook.caughtDebris) { inventory[hook.caughtDebris.type]++; updateUI(); debrisList = debrisList.filter(d => d !== hook.caughtDebris); hook.caughtDebris = null; }
+                } else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
+            }
+
+            hoveredBuildTile = null; hoveredExistingTile = null;
+            if (activeTool === 'platform') {
+                let minDist = Infinity;
+                for (let b of getBuildableTiles()) {
+                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2);
+                    const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
+                    if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hoveredBuildTile = b; }
+                }
+            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook') {
+                hoveredExistingTile = getHoveredExistingTile();
+            }
+        }
+
+        // --- DRAW VISUALS OVERHAUL ---
+        function drawPoly(pts, fill, stroke, lineWidth=1) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for(let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            if(fill) { ctx.fillStyle = fill; ctx.fill(); }
+            if(stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
+        }
+
+        function drawTexturedTile(lx, ly, size, baseColor, isGhost, ghostColor) {
+            const top = worldToScreen(lx, ly), right = worldToScreen(lx + size, ly), bottom = worldToScreen(lx + size, ly + size), left = worldToScreen(lx, ly + size);
+            
+            if (isGhost) {
+                drawPoly([top, right, bottom, left], ghostColor, 'white', 2);
+                ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                return;
+            }
+
+            // Bois de base
+            drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
+
+            // Texture de planches (Lignes au milieu de la face du dessus)
+            ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
+            for(let i=1; i<=3; i++) {
+                let p1 = worldToScreen(lx + (size/4)*i, ly);
+                let p2 = worldToScreen(lx + (size/4)*i, ly + size);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            }
+
+            // Épaisseurs 3D
+            const th = 12;
+            const bL = {x: left.x, y: left.y + th}, bB = {x: bottom.x, y: bottom.y + th}, bR = {x: right.x, y: right.y + th};
+            drawPoly([left, bottom, bB, bL], '#a05828', '#733c16'); // Face gauche
+            drawPoly([bottom, right, bR, bB], '#733c16', '#4a250c'); // Face droite
+        }
+
+        function drawCraftingTable(lx, ly) {
+            const offset = 12; const size = TILE_SIZE - (offset*2); const height = 20;
+            const top = worldToScreen(lx + offset, ly + offset); top.y -= height;
+            const right = worldToScreen(lx + offset + size, ly + offset); right.y -= height;
+            const bottom = worldToScreen(lx + offset + size, ly + offset + size); bottom.y -= height;
+            const left = worldToScreen(lx + offset, ly + offset + size); left.y -= height;
+
+            // Base du meuble
+            const bL = {x: left.x, y: left.y + height}, bB = {x: bottom.x, y: bottom.y + height}, bR = {x: right.x, y: right.y + height};
+            drawPoly([left, bottom, bB, bL], '#c0392b', '#922b21'); // Côté
+            drawPoly([bottom, right, bR, bB], '#922b21', '#641e16'); // Côté sombre
+            drawPoly([top, right, bottom, left], '#e74c3c', '#c0392b'); // Dessus
+
+            // Petit outil posé dessus (Fausse enclume/marteau)
+            ctx.fillStyle = '#7f8c8d';
+            ctx.beginPath(); ctx.ellipse(top.x, top.y + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+        }
+
+        function drawPlayer() {
+            const screen = worldToScreen(player.x, player.y);
+            // Ombre
+            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(screen.x, screen.y, 12, 6, 0, 0, Math.PI*2); ctx.fill();
+
+            // Calcul de l'animation de marche
+            let bob = 0;
+            let leg1Lift = 0;
+            let leg2Lift = 0;
+            
+            if (player.isMoving) {
+                const speed = 0.25;
+                bob = Math.abs(Math.sin(player.walkAnim * speed)) * 3; // Rebond du corps
+                leg1Lift = Math.max(0, Math.sin(player.walkAnim * speed)) * 6; // Lève la jambe gauche
+                leg2Lift = Math.max(0, Math.cos(player.walkAnim * speed)) * 6; // Lève la jambe droite
+            }
+
+            const x = screen.x;
+            const y = screen.y - bob; // Le haut du corps rebondit
+
+            // Jambes (Pantalons bleu) - La base reste au niveau du sol
+            ctx.fillStyle = '#2980b9'; 
+            ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); 
+            ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
+            
+            // Corps (T-Shirt orange)
+            ctx.fillStyle = '#e67e22'; drawPoly([{x:x-8, y:y-26}, {x:x+8, y:y-26}, {x:x+7, y:y-12}, {x:x-7, y:y-12}], '#e67e22', '#d35400');
+            // Tête
+            ctx.fillStyle = '#f5b041'; ctx.fillRect(x - 6, y - 38, 12, 12);
+            // Cheveux
+            ctx.fillStyle = '#5c4033'; ctx.fillRect(x - 7, y - 40, 14, 5); ctx.fillRect(x - 7, y - 40, 4, 10);
+
+            // Animations Outils
+            if (activeTool === 'spear' && player.currentAction === 'spear') {
+                const angle = Math.atan2(mouse.y - y, mouse.x - x); const thrust = Math.sin((player.actionTimer / 15) * Math.PI) * 20; 
+                ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x + Math.cos(angle)*(35+thrust), y - 18 + Math.sin(angle)*(35+thrust));
+                ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 3; ctx.stroke();
+            } else if (activeTool === 'bow') {
+                const angle = Math.atan2(mouse.y - y, mouse.x - x);
+                ctx.beginPath(); ctx.arc(x + Math.cos(angle)*15, y - 18 + Math.sin(angle)*15, 12, angle - Math.PI/2, angle + Math.PI/2);
+                ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x + Math.cos(angle - Math.PI/2)*12, y - 18 + Math.sin(angle - Math.PI/2)*12); ctx.lineTo(x, y-18); ctx.lineTo(x + Math.cos(angle + Math.PI/2)*12, y - 18 + Math.sin(angle + Math.PI/2)*12);
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 1; ctx.stroke();
+            } else if (activeTool === 'axe') {
+                ctx.fillStyle = '#8B4513'; ctx.fillRect(x + 8, y - 22, 4, 18); // Manche
+                ctx.fillStyle = '#bdc3c7'; drawPoly([{x:x+12, y:y-22}, {x:x+20, y:y-26}, {x:x+20, y:y-14}], '#bdc3c7'); // Lame
+            }
+        }
+
+        function drawDebris3D(d) {
+            const screen = d.isHooked ? {x: hook.x, y: hook.y} : worldToScreen(d.x, d.y);
+            ctx.save(); ctx.translate(screen.x, screen.y);
+            
+            // Oscillation sur l'eau
+            ctx.translate(0, Math.sin((Date.now() + d.x)/300) * 4);
+
+            if (d.type === 'wood') {
+                // Petite caisse/planche 3D
+                drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); // Haut
+                drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); // Gauche
+                drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); // Droite
+            } else {
+                // Ferraille (morceau de métal plié)
+                drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); // Plaque 1
+                drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); // Plaque 2 pliée
+            }
+            ctx.restore();
+        }
+
+        function drawManta() {
+            if (manta.state === 'COOLDOWN') return;
+            const screenM = worldToScreen(manta.x, manta.y);
+            ctx.save(); ctx.translate(screenM.x, screenM.y); ctx.translate(0, Math.sin(Date.now() / 200) * 12);
+            
+            if (manta.state === 'APPROACHING') ctx.globalAlpha = 0.5; 
+            
+            // Shading : Aile gauche claire, aile droite foncée
+            drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); // Gauche
+            drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); // Droite
+            
+            // Queue segmentée
+            ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
+
+            // Yeux
+            ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-10, -10, 3, 0, Math.PI*2); ctx.arc(10, -10, 3, 0, Math.PI*2); ctx.fill();
+
+            if (manta.hp < manta.maxHp && manta.state !== 'FLEEING') {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -45, 40, 6);
+                ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -45, 40 * (manta.hp/manta.maxHp), 6);
+            }
+            ctx.restore();
+
+            if (manta.state === 'APPROACHING' || manta.state === 'ATTACHED') {
+                const tgt = worldToScreen(manta.targetTile.x * TILE_SIZE + TILE_SIZE/2, manta.targetTile.y * TILE_SIZE + TILE_SIZE/2);
+                ctx.fillStyle = `rgba(231, 76, 60, ${Math.abs(Math.sin(Date.now() / 150))})`; 
+                ctx.beginPath(); ctx.arc(tgt.x, tgt.y, 25, 0, Math.PI*2); ctx.fill();
+                if (manta.state === 'ATTACHED') {
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40, 8);
+                    ctx.fillStyle = '#f1c40f'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40 * (manta.timer / manta.maxTimer), 8);
+                }
+            }
+        }
+
+        function draw() {
+            // Ciel
+            ctx.fillStyle = '#74b9ff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Nuages (Ombres douces)
+            for (let c of clouds) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath(); ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+                ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.3, c.size * 0.7, 0, Math.PI * 2);
+                ctx.arc(c.x - c.size * 0.6, c.y - c.size * 0.2, c.size * 0.6, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Vent (Lignes de vitesse)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2;
+            for (let w of windLines) {
+                ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x + w.length, w.y - w.length*0.5); ctx.stroke();
+            }
+
+            // Radeau (Trié)
+            let sortedTiles = Array.from(raftTiles.keys()).map(t => {
+                let [x, y] = t.split(',').map(Number); return {x, y, data: raftTiles.get(t), key: t};
+            }).sort((a, b) => (a.x + a.y) - (b.x + b.y));
+
+            for (let tile of sortedTiles) {
+                drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, '#CD853F');
+                if (tile.data.hasTable) drawCraftingTable(tile.x * TILE_SIZE, tile.y * TILE_SIZE);
+
+                if (hoveredExistingTile && hoveredExistingTile.key === tile.key) {
+                    if (activeTool === 'axe') drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, null, true, 'rgba(231, 76, 60, 0.5)');
+                    else if (tile.data.hasTable) drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, null, true, 'rgba(255, 255, 255, 0.3)');
+                }
+            }
+
+            // Hologrammes de Construction
+            if (activeTool === 'platform') {
+                let buildables = getBuildableTiles().sort((a, b) => (a.x + a.y) - (b.x + b.y));
+                for (let b of buildables) {
+                    let isHovered = (hoveredBuildTile && hoveredBuildTile.x === b.x && hoveredBuildTile.y === b.y);
+                    let color = isHovered ? (inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)') : 'rgba(255, 255, 255, 0.15)'; 
+                    drawTexturedTile(b.x * TILE_SIZE, b.y * TILE_SIZE, TILE_SIZE, null, true, color);
+                }
+            }
+            if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable) {
+                let color = inventory.tables > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
+                drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, TILE_SIZE, null, true, color);
+            }
+
+            // Entités
+            for (let d of debrisList) drawDebris3D(d);
+            drawManta();
+            drawPlayer();
+
+            // Projectiles
+            for(let p of projectiles) { 
+                ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); 
+                ctx.strokeStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx, p.y - p.vy); ctx.stroke(); // Traînée
+            }
+
+            // Grappin Avancé
+            if (activeTool === 'hook') {
+                const pScreen = worldToScreen(player.x, player.y), sX = pScreen.x, sY = pScreen.y - 15;
+
+                if (hook.state === 'THROWN' || hook.state === 'RETRACTING') {
+                    // Corde
+                    ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(hook.x, hook.y); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
+                    // Tête du grappin 3D
+                    ctx.save(); ctx.translate(hook.x, hook.y);
+                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
+                    drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); // Dents
+                    ctx.restore();
+                }
+
+                if (hook.state === 'CHARGING') {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40, 6);
+                    ctx.fillStyle = hook.charge > hook.maxCharge * 0.8 ? '#e74c3c' : '#f1c40f'; 
+                    ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40 * (hook.charge / hook.maxCharge), 6);
+                    ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(mouse.x, mouse.y); ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+                }
+            }
+        }
+
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>
