@@ -524,10 +524,10 @@
                     <div class="craft-icon">⛵</div>
                     <div class="craft-details">
                         <h4>Voile (Vitesse +)</h4>
-                        <div class="craft-cost"><span class="cost-pill">4 🪵</span> <span class="cost-pill">2 🔩</span> <span class="cost-pill">3 🧵</span></div>
+                        <div class="craft-cost"><span class="cost-pill">6 🪵</span> <span class="cost-pill">4 🔩</span> <span class="cost-pill">5 🧵</span></div>
                     </div>
                 </div>
-                <button class="btn-craft" id="btn-craft-sail-action" onclick="craft('sail', 4, 2, 1, 3)">Fabriquer</button>
+                <button class="btn-craft" id="btn-craft-sail-action" onclick="craft('sail', 6, 4, 1, 5)">Fabriquer</button>
             </div>
         </div>
     </div>
@@ -592,7 +592,7 @@
 
         const TILE_SIZE = 60;
         
-        const inventory = { wood: 50, scrap: 20, cloth: 0, platforms: 0, tables: 0, arrows: 0, meat: 0, sails: 0, torches: 0 };
+        const inventory = { wood: 10, scrap: 10, cloth: 0, platforms: 0, tables: 0, arrows: 0, meat: 0, sails: 0, torches: 0 };
         const unlockedTools = { axe: false, spear: false, bow: false };
         let hasCraftedSail = false;
         let activeTool = 'hook'; 
@@ -973,7 +973,7 @@
             const sailCraftItem = document.getElementById('craft-item-sail');
             const sailCraftBtn = document.getElementById('btn-craft-sail-action');
             if (sailCraftItem && sailCraftBtn) {
-                if (inventory.wood >= 4 && inventory.scrap >= 2 && inventory.cloth >= 3) {
+                if (inventory.wood >= 6 && inventory.scrap >= 4 && inventory.cloth >= 5) {
                     sailCraftItem.style.filter = 'none';
                     sailCraftBtn.disabled = false;
                 } else {
@@ -1098,7 +1098,7 @@
                 if (tool === 'platform') craft('platform', 2, 1, 1, 0);
                 else if (tool === 'table') craft('table', 5, 3, 1, 0);
                 else if (tool === 'bow') craft('arrows', 1, 1, 3, 0);
-                else if (tool === 'sail') craft('sail', 4, 2, 1, 3);
+                else if (tool === 'sail') craft('sail', 6, 4, 1, 5);
                 else if (tool === 'torch') craft('torch', 2, 1, 1, 0);
                 return; 
             }
@@ -1573,7 +1573,7 @@
                 if (b.x < -200 || b.x > canvas.width + 200) birds.splice(i, 1);
             }
 
-            if (Math.random() < 0.015) {
+            if (Math.random() < 0.006) { // REDUIT DE 0.015 A 0.006
                 let randType = 'wood';
                 let roll = Math.random();
                 if (roll > 0.85) randType = 'barrel';
