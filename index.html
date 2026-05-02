@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyRaft - Prototype Crafting</title>
+    <title>SkyRaft</title>
     <!-- Police Pixel -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -65,6 +65,26 @@
             0% { transform: translateY(0px); }
             50% { transform: translateY(-15px); }
             100% { transform: translateY(0px); }
+        }
+
+        /* NOUVEAU : Styles pour les textes de l'écran titre */
+        .game-goal {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .high-score {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1rem;
+            color: #2ecc71;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
 
         .btn-start {
@@ -148,6 +168,7 @@
             position: absolute; right: 20px; top: 100px;
             width: 310px; padding: 20px;
             pointer-events: auto;
+            transition: opacity 0.5s ease;
         }
         .tutorial-title { 
             font-family: 'Press Start 2P', monospace;
@@ -221,7 +242,7 @@
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         
-        .hidden-slot { display: none !important; } /* Classe pour masquer dynamiquement un slot */
+        .hidden-slot { display: none !important; } 
 
         .slot:hover:not(.locked) { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-5px); }
         .slot.active {
@@ -232,6 +253,16 @@
 
         .slot-icon { font-size: 28px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
         
+        #slot-meat {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-color: #e74c3c;
+        }
+        #slot-meat:hover { background: rgba(231, 76, 60, 0.2); }
+        #slot-meat.hidden-food {
+            width: 0; height: 0; padding: 0; margin: 0; border-width: 0; opacity: 0; transform: scale(0);
+            pointer-events: none;
+        }
+
         .slot-key {
             position: absolute; top: -8px; left: -8px; background: #f1c40f; color: #2c3e50;
             width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: bold;
@@ -283,7 +314,10 @@
         .craft-icon {
             font-size: 2rem; background: rgba(0,0,0,0.3); width: 48px; height: 48px;
             display: flex; justify-content: center; align-items: center; border-radius: 8px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
+        .craft-icon img { width: 100%; height: 100%; object-fit: contain; }
+
         .craft-details h4, .setting-item h4 { margin: 0 0 5px 0; font-size: 1rem; }
         
         .craft-cost { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -315,7 +349,9 @@
         
         /* --- MOBILE ADAPTATIONS --- */
         @media (max-width: 768px) {
-            .pixel-title { font-size: 3rem; text-shadow: 2px 2px 0px #e67e22, 4px 4px 0px #d35400, 6px 6px 0px #a04000; margin-bottom: 40px; }
+            .pixel-title { font-size: 3rem; text-shadow: 2px 2px 0px #e67e22, 4px 4px 0px #d35400, 6px 6px 0px #a04000; margin-bottom: 30px; }
+            .game-goal { font-size: 0.6rem; padding: 0 20px; margin-bottom: 15px; }
+            .high-score { font-size: 0.8rem; margin-bottom: 30px; }
             #hud-top { padding: 10px; }
             #status-panel { padding: 10px; width: 120px; }
             .btn-icon { width: 44px; height: 44px; }
@@ -341,6 +377,11 @@
     <!-- ECRAN DE DEMARRAGE -->
     <div id="start-screen">
         <h1 class="pixel-title">SkyRaft</h1>
+        
+        <!-- NOUVEAU : Objectif et Record -->
+        <p class="game-goal">Objectif : Survis et parcours le plus de kilomètres possible dans les cieux avant que ton radeau ne soit détruit ou que tu ne meures de faim !</p>
+        <p class="high-score">Record : <span id="ui-highscore">0.0</span> km</p>
+
         <button class="btn-start" onclick="startGame()">Commencer l'aventure</button>
     </div>
 
@@ -384,25 +425,14 @@
             </div>
         </div>
 
-        <!-- TUTORIEL TO-DO LIST -->
-        <div id="tutorial-panel" class="panel">
-            <div class="tutorial-title">Objectifs :</div>
-            <div class="tutorial-task" id="tut-hookDebris"><span class="check">⬜</span> 1. Ramasser un débris (grappin)</div>
-            <div class="tutorial-task" id="tut-platform"><span class="check">⬜</span> 2. Poser un plancher (clic 2x pour craft)</div>
-            <div class="tutorial-task" id="tut-table"><span class="check">⬜</span> 3. Créer une table de craft</div>
-            <div class="tutorial-task" id="tut-bowAndArrow"><span class="check">⬜</span> 4. Créer un arc et flèches</div>
-            <div class="tutorial-task" id="tut-food"><span class="check">⬜</span> 5. Chasser un oiseau</div>
-            <div class="tutorial-task" id="tut-eat"><span class="check">⬜</span> 6. Manger le gigot en bas</div>
-        </div>
+        <!-- TUTORIEL TO-DO LIST (Vide, générée en JS) -->
+        <div id="tutorial-panel" class="panel" style="opacity: 0;"></div>
 
         <div id="hotbar-container">
             <div id="resource-panel" class="panel">
                 <div class="resource-item">🪵 <span id="ui-wood">50</span></div>
                 <div class="resource-item">🔩 <span id="ui-scrap">20</span></div>
                 <div class="resource-item">🧵 <span id="ui-cloth">0</span></div>
-                <div class="resource-item" style="cursor: pointer;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="eatFood()" title="Manger (Restaure Faim et Vie)">
-                    🍖 <span id="ui-meat">0</span>
-                </div>
             </div>
             <div id="hotbar" class="panel">
                 <div class="slot active" id="slot-1" onclick="setActiveTool('hook')">
@@ -429,6 +459,9 @@
                 <div class="slot" id="slot-8" onclick="setActiveTool('torch')">
                     <div class="slot-key">8</div><div class="slot-icon">🔥</div><div class="slot-qty" id="ui-torch">0</div>
                 </div>
+                <div class="slot hidden-food" id="slot-meat" onclick="eatFood()" title="Manger">
+                    <div class="slot-icon">🍖</div><div class="slot-qty" id="ui-meat-hotbar">0</div>
+                </div>
             </div>
         </div>
     </div>
@@ -454,7 +487,7 @@
                 <div class="craft-info">
                     <div class="craft-icon">🧰</div>
                     <div class="craft-details">
-                        <h4>Table d'Artisanat</h4>
+                        <h4>Établi</h4>
                         <div class="craft-cost"><span class="cost-pill">5 🪵</span> <span class="cost-pill">3 🔩</span></div>
                     </div>
                 </div>
@@ -542,9 +575,9 @@
             <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
                 <div style="display: flex; justify-content: space-between; width: 100%;">
                     <h4>Volume de la Musique</h4>
-                    <span id="vol-display">30%</span>
+                    <span id="vol-display">5%</span>
                 </div>
-                <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.3" oninput="updateMusicVolume(this.value)">
+                <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.05" oninput="updateMusicVolume(this.value)">
             </div>
             
             <h4 style="margin: 10px 0 0 0; color: #f1c40f; text-align: center;">Raccourcis Clavier</h4>
@@ -563,10 +596,31 @@
     <canvas id="gameCanvas"></canvas>
 
     <script>
+        // === GESTIONNAIRE D'ASSETS (IMAGES) ===
+        const ASSETS_URLS = {
+            platform: { src: '', w: 60, h: 45, ox: -30, oy: 0 },
+            wood: { src: '', w: 30, h: 15, ox: -15, oy: -5 },
+            scrap: { src: '', w: 30, h: 15, ox: -15, oy: -5 },
+            barrel: { src: '', w: 24, h: 30, ox: -12, oy: -20 },
+            table: { src: '', w: 50, h: 40, ox: -25, oy: -35 },
+            manta: { src: '', w: 100, h: 100, ox: -50, oy: -50 },
+            player: { src: '', w: 32, h: 48, ox: -16, oy: -40 },
+            giantBird: { src: '', w: 120, h: 120, ox: -60, oy: -60 }
+        };
+
+        const ASSETS = {};
+        for (let key in ASSETS_URLS) {
+            ASSETS[key] = { img: new Image(), loaded: false, ...ASSETS_URLS[key] };
+            if (ASSETS[key].src !== '') {
+                ASSETS[key].img.onload = () => { ASSETS[key].loaded = true; };
+                ASSETS[key].img.src = ASSETS[key].src;
+            }
+        }
+        // ======================================
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Canvas hors écran pour gérer les lumières
         const lightCanvas = document.createElement('canvas');
         const lightCtx = lightCanvas.getContext('2d');
 
@@ -579,16 +633,18 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // --- VARIABLES ---
         let gameState = 'START'; 
 
         // Temps
         let dayCount = 1;
-        let timeOfDay = 8; // Commence à 08:00 (Jour)
-        const TIME_SPEED = 0.0012; // Journées plus longues (~5.5 minutes)
+        let timeOfDay = 8; 
+        const TIME_SPEED = 0.0012; 
 
-        let currentWorldSpeed = 0.4; // Vitesse de base
+        let currentWorldSpeed = 0.4; 
         let distanceTraveled = 0; 
+        
+        // NOUVEAU : Chargement du record depuis la mémoire locale
+        let highScore = parseFloat(localStorage.getItem('skyraft_highscore')) || 0;
 
         const TILE_SIZE = 60;
         
@@ -599,13 +655,53 @@
         
         let menus = { basic: false, advanced: false, settings: false };
 
-        const tutorialState = { hookDebris: false, platform: false, table: false, bowAndArrow: false, food: false, eat: false };
+        let currentTutorialPhase = 0;
+        const tutorialState = {
+            hookDebris: false,
+            craftPlatform: false,
+            craftTorch: false,
+            placePlatform: false,
+            placeTable: false,
+            bowAndArrow: false,
+            food: false,
+            eat: false,
+            sail: false
+        };
+
+        const tutorialPhases = [
+            {
+                title: "Les Bases",
+                tasks: [
+                    { id: 'hookDebris', text: '1. Ramasser un débris' },
+                    { id: 'craftPlatform', text: '2. Crafter un plancher' },
+                    { id: 'craftTorch', text: '3. Crafter une torche' },
+                    { id: 'placePlatform', text: '4. Poser un plancher' }
+                ]
+            },
+            {
+                title: "L'Établi & Chasse",
+                tasks: [
+                    { id: 'placeTable', text: '1. Poser un Établi' },
+                    { id: 'bowAndArrow', text: '2. Créer arc et flèches' },
+                    { id: 'food', text: '3. Chasser un oiseau' },
+                    { id: 'eat', text: '4. Manger de la viande' }
+                ]
+            },
+            {
+                title: "Prendre le large",
+                tasks: [
+                    { id: 'sail', text: '1. Poser une voile' }
+                ]
+            }
+        ];
 
         let raftTiles = new Map();
         raftTiles.set('0,0', { hasTable: false, hasSail: false, hasTorch: false }); 
         raftTiles.set('1,0', { hasTable: false, hasSail: false, hasTorch: false }); 
         raftTiles.set('0,1', { hasTable: false, hasSail: false, hasTorch: false }); 
         raftTiles.set('1,1', { hasTable: false, hasSail: false, hasTorch: false }); 
+        
+        let sinkingTiles = []; 
         
         let hoveredBuildTile = null; 
         let hoveredExistingTile = null;
@@ -644,21 +740,108 @@
 
         const manta = {
             state: 'COOLDOWN', x: 0, y: 0, targetTile: null,
-            hp: 3, maxHp: 3, timer: 0, maxTimer: 900, cooldown: 900, speed: 2
+            hp: 8, maxHp: 8, timer: 0, maxTimer: 900, cooldown: 900, speed: 2
         };
 
-        // --- DEMARRAGE & PAUSE ---
+        // --- NOUVEAU : GRAND OISEAU BOSS ---
+        const giantBird = {
+            active: false,
+            state: 'WAITING',
+            x: 0, y: 0, z: 200,
+            hp: 6, maxHp: 6, 
+            diveTimer: 0,
+            spawnTimer: 7200, // 2 minutes à 60fps
+            angle: 0
+        };
+
+        function checkRaftIntegrity() {
+            if (raftTiles.size === 0) return;
+            let root = null;
+            if (raftTiles.has('0,0')) {
+                root = '0,0';
+            } else {
+                let minDist = Infinity;
+                for (let key of raftTiles.keys()) {
+                    let [x, y] = key.split(',').map(Number);
+                    let dist = x*x + y*y; 
+                    if (dist < minDist) { minDist = dist; root = key; }
+                }
+            }
+
+            if (!root) return;
+
+            let visited = new Set();
+            let queue = [root];
+            visited.add(root);
+
+            while (queue.length > 0) {
+                let current = queue.shift();
+                let [cx, cy] = current.split(',').map(Number);
+                let neighbors = [`${cx+1},${cy}`, `${cx-1},${cy}`, `${cx},${cy+1}`, `${cx},${cy-1}`];
+                for (let n of neighbors) {
+                    if (raftTiles.has(n) && !visited.has(n)) {
+                        visited.add(n);
+                        queue.push(n);
+                    }
+                }
+            }
+
+            let toRemove = [];
+            for (let key of raftTiles.keys()) {
+                if (!visited.has(key)) toRemove.push(key);
+            }
+
+            for (let key of toRemove) {
+                let data = raftTiles.get(key);
+                let [x, y] = key.split(',').map(Number);
+                sinkingTiles.push({ x: x, y: y, data: data, z: 0, opacity: 1 });
+                raftTiles.delete(key);
+            }
+
+            if (toRemove.length > 0) playSound('throw');
+
+            let pTileX = Math.floor(player.x / TILE_SIZE);
+            let pTileY = Math.floor(player.y / TILE_SIZE);
+            if (!raftTiles.has(`${pTileX},${pTileY}`)) {
+                player.hp -= 20; 
+                let newRoot = '0,0';
+                if (!raftTiles.has('0,0')) newRoot = raftTiles.keys().next().value;
+                if (newRoot) {
+                    let [rx, ry] = newRoot.split(',').map(Number);
+                    player.x = rx * TILE_SIZE + TILE_SIZE/2;
+                    player.y = ry * TILE_SIZE + TILE_SIZE/2;
+                    playSound('hit');
+                }
+            }
+        }
+
+        // --- NOUVEAU : Fonction de sauvegarde du High Score ---
+        function checkAndSaveHighScore() {
+            if (distanceTraveled > highScore) {
+                highScore = distanceTraveled;
+                localStorage.setItem('skyraft_highscore', highScore);
+                document.getElementById('ui-highscore').innerText = (highScore / 1000).toFixed(1);
+            }
+        }
+        
+        // Initialisation de l'affichage du record au démarrage
+        document.getElementById('ui-highscore').innerText = (highScore / 1000).toFixed(1);
+
         function startGame() {
             gameState = 'PLAYING';
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('ui-layer').style.display = 'flex';
             initAudio();
             playSound('ui');
+            loadTutorialPhase(0); 
         }
 
         function returnToTitle() {
             initAudio(); playSound('ui');
             closeAllMenus();
+            
+            checkAndSaveHighScore(); // Sauvegarde avant de quitter
+            
             for (let k in keys) keys[k] = false; 
             mouse.isDown = false;
             vJoystick.active = false;
@@ -668,20 +851,15 @@
             document.getElementById('start-screen').style.display = 'flex';
         }
 
-        // --- SYSTEME AUDIO (Web Audio API) ---
         let audioCtx;
         let musicGainNode;
         let windGainNode;
         let isMusicPlaying = false;
-        let currentMusicVolume = 0.3; 
+        let currentMusicVolume = 0.05; 
 
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!isMusicPlaying && gameState === 'PLAYING') {
                 startProceduralMusic();
                 startWindSound();
@@ -692,12 +870,8 @@
             currentMusicVolume = parseFloat(val);
             document.getElementById('vol-display').innerText = Math.round(currentMusicVolume * 100) + '%';
             if (isMuted) return; 
-            if (musicGainNode) {
-                musicGainNode.gain.setTargetAtTime(currentMusicVolume, audioCtx.currentTime, 0.1);
-            }
-            if (windGainNode) {
-                windGainNode.gain.setTargetAtTime(currentMusicVolume * 0.05, audioCtx.currentTime, 0.1);
-            }
+            if (musicGainNode) musicGainNode.gain.setTargetAtTime(currentMusicVolume, audioCtx.currentTime, 0.1);
+            if (windGainNode) windGainNode.gain.setTargetAtTime(currentMusicVolume * 0.05, audioCtx.currentTime, 0.1);
         }
 
         let isMuted = false;
@@ -705,7 +879,6 @@
             initAudio(); 
             isMuted = !isMuted;
             document.getElementById('icon-mute').innerText = isMuted ? '🔇' : '🔊';
-            
             if (audioCtx) {
                 if (isMuted) {
                     if (musicGainNode) musicGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
@@ -763,14 +936,12 @@
 
             function playAmbientNote() {
                 if (!isMusicPlaying) return;
-
                 const osc = audioCtx.createOscillator();
                 const noteGain = audioCtx.createGain();
                 const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
                 if (panner) panner.pan.value = (Math.random() * 1.8) - 0.9; 
 
                 osc.type = 'sine';
-                
                 let freq = scale[Math.floor(Math.random() * scale.length)];
                 if (Math.random() > 0.6) freq = freq * 2; 
                 osc.frequency.value = freq;
@@ -790,12 +961,8 @@
                 osc.connect(filter);
                 filter.connect(noteGain);
                 
-                if (panner) {
-                    noteGain.connect(panner);
-                    panner.connect(musicGainNode);
-                } else {
-                    noteGain.connect(musicGainNode);
-                }
+                if (panner) { noteGain.connect(panner); panner.connect(musicGainNode); } 
+                else { noteGain.connect(musicGainNode); }
 
                 osc.start(now);
                 osc.stop(now + attack + release);
@@ -874,47 +1041,84 @@
             }
         }
 
-        // --- GESTION DU TUTORIEL ---
-        function checkTutorial(task) {
-            if (tutorialState[task]) return;
+        function loadTutorialPhase(index) {
+            if (index >= tutorialPhases.length) {
+                const panel = document.getElementById('tutorial-panel');
+                if(panel) {
+                    panel.style.transition = 'opacity 1s ease';
+                    panel.style.opacity = '0';
+                    setTimeout(() => panel.style.display = 'none', 1000);
+                }
+                return;
+            }
+            
+            const phase = tutorialPhases[index];
+            const panel = document.getElementById('tutorial-panel');
+            panel.style.opacity = '0'; 
+            
+            setTimeout(() => {
+                let html = `<div class="tutorial-title">${phase.title}</div>`;
+                let visibleTasks = 0;
+                
+                phase.tasks.forEach(task => {
+                    const isDone = tutorialState[task.id];
+                    if (!isDone) {
+                        html += `<div class="tutorial-task" id="tut-${task.id}" style="max-height: 100px; opacity: 1; margin-bottom: 12px;">
+                                    <span class="check">⬜</span> ${task.text}
+                                 </div>`;
+                        visibleTasks++;
+                    }
+                });
+                
+                if (visibleTasks > 0) {
+                    panel.innerHTML = html;
+                    panel.style.transition = 'opacity 0.5s ease';
+                    panel.style.opacity = '1'; 
+                } else {
+                    currentTutorialPhase++;
+                    loadTutorialPhase(currentTutorialPhase);
+                }
+            }, 500);
+        }
 
-            if (task === 'hookDebris') tutorialState.hookDebris = true;
-            if (task === 'platform') tutorialState.platform = true;
-            if (task === 'table') tutorialState.table = true;
-            if (task === 'bowAndArrow' && unlockedTools.bow && inventory.arrows > 0) tutorialState.bowAndArrow = true;
-            if (task === 'food') tutorialState.food = true;
-            if (task === 'eat') tutorialState.eat = true;
-
-            if (tutorialState[task]) {
+        function checkTutorial(taskId) {
+            if (tutorialState[taskId]) return; 
+            
+            tutorialState[taskId] = true;
+            
+            const el = document.getElementById(`tut-${taskId}`);
+            if (el) {
                 playSound('success');
-                const el = document.getElementById(`tut-${task}`);
-                if (el) {
-                    el.classList.add('done');
-                    el.querySelector('.check').innerText = '✅';
-                    
-                    el.style.maxHeight = el.scrollHeight + 'px';
-                    setTimeout(() => {
-                        el.style.opacity = '0';
-                        el.style.maxHeight = '0px';
-                        el.style.marginBottom = '0px';
-                        setTimeout(() => el.style.display = 'none', 500);
-                    }, 1500);
-                }
+                el.classList.add('done');
+                el.querySelector('.check').innerText = '✅';
+                
+                el.style.maxHeight = el.scrollHeight + 'px';
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.maxHeight = '0px';
+                    el.style.marginBottom = '0px';
+                    setTimeout(() => el.style.display = 'none', 500);
+                }, 1500);
+            }
 
-                if (tutorialState.hookDebris && tutorialState.platform && tutorialState.table && tutorialState.bowAndArrow && tutorialState.food && tutorialState.eat) {
-                    setTimeout(() => {
-                        const panel = document.getElementById('tutorial-panel');
-                        if (panel) {
-                            panel.style.transition = 'opacity 1s ease';
-                            panel.style.opacity = '0';
-                            setTimeout(() => panel.style.display = 'none', 1000);
-                        }
-                    }, 2000);
-                }
+            if (currentTutorialPhase >= tutorialPhases.length) return;
+            const currentPhaseTasks = tutorialPhases[currentTutorialPhase].tasks.map(t => t.id);
+            const allDone = currentPhaseTasks.every(tId => tutorialState[tId]);
+            
+            if (allDone) {
+                setTimeout(() => {
+                    currentTutorialPhase++;
+                    loadTutorialPhase(currentTutorialPhase);
+                }, 2000);
             }
         }
 
-        // --- UI & KEYBIND LOGIC ---
+        function checkBowAndArrow() {
+            if (unlockedTools.bow && inventory.arrows > 0) {
+                checkTutorial('bowAndArrow');
+            }
+        }
+
         function updateNavigationUI() {
             document.getElementById('ui-day').innerText = dayCount; 
 
@@ -936,14 +1140,12 @@
             document.getElementById('ui-wood').innerText = inventory.wood;
             document.getElementById('ui-scrap').innerText = inventory.scrap;
             document.getElementById('ui-cloth').innerText = inventory.cloth;
-            document.getElementById('ui-meat').innerText = inventory.meat;
             document.getElementById('ui-plat').innerText = inventory.platforms > 0 ? inventory.platforms : '';
             document.getElementById('ui-tab').innerText = inventory.tables > 0 ? inventory.tables : '';
             document.getElementById('ui-arr').innerText = inventory.arrows > 0 ? inventory.arrows : '';
             document.getElementById('ui-sail').innerText = inventory.sails > 0 ? inventory.sails : '';
             document.getElementById('ui-torch').innerText = inventory.torches > 0 ? inventory.torches : '';
             
-            // Faim Visuelle
             const hungerBar = document.getElementById('ui-hunger-bar');
             const hungerLabel = document.getElementById('hunger-label');
             hungerBar.style.width = (player.hunger / player.maxHunger * 100) + '%';
@@ -960,16 +1162,22 @@
 
             document.getElementById('ui-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
 
-            // Slot de Voile affiché uniquement si crafté une fois
             if (hasCraftedSail) {
                 document.getElementById('slot-7').classList.remove('hidden-slot');
+            }
+
+            const meatSlot = document.getElementById('slot-meat');
+            if (inventory.meat > 0) {
+                meatSlot.classList.remove('hidden-food');
+                document.getElementById('ui-meat-hotbar').innerText = inventory.meat;
+            } else {
+                meatSlot.classList.add('hidden-food');
             }
 
             if (unlockedTools.axe) document.getElementById('slot-4').classList.remove('locked');
             if (unlockedTools.spear) document.getElementById('slot-5').classList.remove('locked');
             if (unlockedTools.bow) document.getElementById('slot-6').classList.remove('locked');
 
-            // NOUVEAU: Griser la voile si on n'a pas les ressources nécessaires
             const sailCraftItem = document.getElementById('craft-item-sail');
             const sailCraftBtn = document.getElementById('btn-craft-sail-action');
             if (sailCraftItem && sailCraftBtn) {
@@ -1030,7 +1238,7 @@
                 document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase();
                 isRebinding = null;
             }
-            updateUI(); // Maj pour les boutons grisés
+            updateUI(); 
         }
 
         function closeAllMenus() {
@@ -1055,24 +1263,25 @@
                 inventory.scrap -= scrapCost;
                 inventory.cloth -= clothCost;
                 
-                if (item === 'platform') inventory.platforms += yieldAmount;
+                if (item === 'platform') {
+                    inventory.platforms += yieldAmount;
+                    checkTutorial('craftPlatform');
+                }
                 if (item === 'table') {
                     inventory.tables += yieldAmount;
-                    checkTutorial('table'); 
-                    if (!hasCraftedTable) {
-                        hasCraftedTable = true; 
-                        manta.cooldown = 3600; 
-                    }
                 }
                 if (item === 'arrows') {
                     inventory.arrows += yieldAmount;
-                    checkTutorial('bowAndArrow'); 
+                    checkBowAndArrow();
                 }
                 if (item === 'sail') {
                     inventory.sails += yieldAmount;
                     hasCraftedSail = true;
                 }
-                if (item === 'torch') inventory.torches += yieldAmount;
+                if (item === 'torch') {
+                    inventory.torches += yieldAmount;
+                    checkTutorial('craftTorch');
+                }
 
                 updateUI();
             }
@@ -1084,7 +1293,7 @@
                 inventory.wood -= woodCost; inventory.scrap -= scrapCost; unlockedTools[tool] = true;
                 document.getElementById(`btn-craft-${tool}`).innerText = "Acquis"; document.getElementById(`btn-craft-${tool}`).disabled = true;
                 
-                if (tool === 'bow') checkTutorial('bowAndArrow'); 
+                if (tool === 'bow') checkBowAndArrow();
                 updateUI();
             }
         }
@@ -1109,7 +1318,6 @@
             document.getElementById(`slot-${slotIds[tool]}`).classList.add('active');
         }
 
-        // --- MATH ISOMETRIQUE & GRILLE ---
         function worldToScreen(x, y) {
             const dx = x - camera.x;
             const dy = y - camera.y;
@@ -1149,7 +1357,6 @@
             return hovered;
         }
 
-        // --- CREATION D'ENVIRONNEMENT ---
         function spawnEdgePos() {
             if (Math.random() > 0.5) {
                 return { x: Math.random() * (canvas.width + 800) - 400, y: -400 };
@@ -1183,7 +1390,6 @@
             };
         }
 
-        // --- GESTION DES ACTIONS (Tirées de mouseup/touchend) ---
         function executeAction() {
             if (gameState !== 'PLAYING' || Object.values(menus).some(v => v)) return;
 
@@ -1208,16 +1414,24 @@
             else if (activeTool === 'platform' && hoveredBuildTile && inventory.platforms > 0) {
                 playSound('build');
                 inventory.platforms--; raftTiles.set(`${hoveredBuildTile.x},${hoveredBuildTile.y}`, { hasTable: false, hasSail: false, hasTorch: false }); 
-                checkTutorial('platform'); 
+                checkTutorial('placePlatform'); 
                 updateUI();
             }
             else if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail && inventory.tables > 0) {
                 playSound('build');
-                inventory.tables--; hoveredExistingTile.data.hasTable = true; updateUI();
+                inventory.tables--; hoveredExistingTile.data.hasTable = true; 
+                checkTutorial('placeTable');
+                if (!hasCraftedTable) {
+                    hasCraftedTable = true; 
+                    manta.cooldown = 3600; 
+                }
+                updateUI();
             }
             else if (activeTool === 'sail' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail && inventory.sails > 0) {
                 playSound('build');
-                inventory.sails--; hoveredExistingTile.data.hasSail = true; updateUI();
+                inventory.sails--; hoveredExistingTile.data.hasSail = true; 
+                checkTutorial('sail');
+                updateUI();
             }
             else if (activeTool === 'torch' && hoveredExistingTile && !hoveredExistingTile.data.hasTorch && inventory.torches > 0) {
                 playSound('build');
@@ -1226,7 +1440,10 @@
             else if (activeTool === 'axe' && hoveredExistingTile) {
                 playSound('hit');
                 const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
-                if (!(pTileX === hoveredExistingTile.x && pTileY === hoveredExistingTile.y) && raftTiles.size > 1) raftTiles.delete(hoveredExistingTile.key);
+                if (!(pTileX === hoveredExistingTile.x && pTileY === hoveredExistingTile.y) && raftTiles.size > 1) {
+                    raftTiles.delete(hoveredExistingTile.key);
+                    checkRaftIntegrity(); 
+                }
             }
             else if (activeTool === 'spear') {
                 playSound('spear');
@@ -1236,6 +1453,28 @@
                 if (manta.state === 'ATTACHED' || manta.state === 'APPROACHING') {
                     const mScreen = worldToScreen(manta.x, manta.y);
                     if (Math.hypot(pScreen.x - mScreen.x, pScreen.y - mScreen.y) < 100) { playSound('hit'); manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; }
+                }
+                
+                // NOUVEAU: Collision avec l'oiseau géant
+                if (giantBird.active && (giantBird.state === 'DIVING' || giantBird.state === 'ASCENDING' || giantBird.state === 'CIRCLING')) {
+                    const bScreen = worldToScreen(giantBird.x, giantBird.y);
+                    bScreen.y -= giantBird.z; 
+                    if (Math.hypot(pScreen.x - bScreen.x, pScreen.y - bScreen.y) < 80) {
+                        playSound('hit');
+                        giantBird.hp--;
+                        if (giantBird.hp <= 0) {
+                            giantBird.active = false;
+                            giantBird.state = 'WAITING';
+                            giantBird.spawnTimer = 18000; 
+                            for (let m = 0; m < 4; m++) {
+                                debrisList.push({ 
+                                    x: giantBird.x + (Math.random() * 80 - 40), 
+                                    y: giantBird.y + (Math.random() * 80 - 40), 
+                                    type: 'meat', isHooked: false, rot: Math.random() 
+                                });
+                            }
+                        }
+                    }
                 }
 
                 for (let j = birds.length - 1; j >= 0; j--) {
@@ -1257,7 +1496,6 @@
             }
         }
 
-        // --- EVENTS SOURIS/CLAVIER ---
         window.addEventListener('keydown', (e) => {
             if (gameState !== 'PLAYING') return; 
             initAudio();
@@ -1317,7 +1555,6 @@
             executeAction();
         });
 
-        // CHANGEMENT D'OUTIL AVEC LA MOLETTE
         window.addEventListener('wheel', (e) => {
             if (gameState !== 'PLAYING' || Object.values(menus).some(v => v)) return;
 
@@ -1337,7 +1574,6 @@
             }
         });
 
-        // --- EVENTS TACTILES (MOBILE) ---
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
             e.preventDefault(); 
@@ -1416,11 +1652,9 @@
             hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = 0;
         }
 
-        // INIT ENVIRONMENT
         for(let i=0; i<20; i++) clouds.push(createCloud(Math.random() * 2000 - 500, Math.random() * 2000 - 500));
         for(let i=0; i<15; i++) windLines.push(createWind(Math.random() * 2000 - 500, Math.random() * 2000 - 500));
 
-        // --- UPDATE ---
         function update() {
 
             if (gameState === 'PLAYING' && !Object.values(menus).some(v => v)) {
@@ -1442,7 +1676,6 @@
             let targetSpeed = 0.4 + (hasCraftedTable ? 0.3 : 0) + (sailCount * 0.15); 
             currentWorldSpeed += (targetSpeed - currentWorldSpeed) * 0.005;
 
-            // Avancée du décor
             for (let i = clouds.length - 1; i >= 0; i--) {
                 let c = clouds[i]; c.x -= (currentWorldSpeed + c.speedOffset); c.y += (currentWorldSpeed + c.speedOffset) * 0.5;
                 if (c.x < -400 || c.y > canvas.height + 400) clouds.splice(i, 1);
@@ -1463,25 +1696,117 @@
 
             if (gameState === 'START' || Object.values(menus).some(v => v)) return; 
 
+            // NOUVEAU : Logique du Grand Oiseau
+            if (dayCount >= 2) {
+                if (!giantBird.active && giantBird.state === 'WAITING') {
+                    giantBird.spawnTimer--;
+                    if (giantBird.spawnTimer <= 0) {
+                        giantBird.active = true;
+                        giantBird.state = 'CIRCLING';
+                        giantBird.hp = giantBird.maxHp;
+                        giantBird.x = player.x + 800;
+                        giantBird.y = player.y + 800;
+                        giantBird.z = 400;
+                        giantBird.diveTimer = 1200; 
+                        playSound('manta_warning'); 
+                    }
+                } else if (giantBird.active) {
+                    
+                    if (giantBird.state === 'CIRCLING') {
+                        giantBird.angle += 0.02;
+                        let targetX = player.x + Math.cos(giantBird.angle) * 300;
+                        let targetY = player.y + Math.sin(giantBird.angle) * 300;
+                        
+                        giantBird.x += (targetX - giantBird.x) * 0.02;
+                        giantBird.y += (targetY - giantBird.y) * 0.02;
+                        giantBird.z += (200 - giantBird.z) * 0.05;
+
+                        giantBird.diveTimer--;
+                        if (giantBird.diveTimer <= 0) {
+                            giantBird.state = 'DIVING';
+                            playSound('throw'); 
+                        }
+                    } else if (giantBird.state === 'DIVING') {
+                        let dx = player.x - giantBird.x;
+                        let dy = player.y - giantBird.y;
+                        let dz = 10 - giantBird.z; 
+                        let dist = Math.hypot(dx, dy, dz);
+
+                        if (dist > 15) {
+                            giantBird.x += (dx / dist) * 12;
+                            giantBird.y += (dy / dist) * 12;
+                            giantBird.z += (dz / dist) * 12;
+                        }
+
+                        if (dist < 50 && giantBird.z < 40) {
+                            player.hp -= 10; 
+                            playSound('hit');
+                            giantBird.state = 'ASCENDING';
+                        } else if (giantBird.z <= 15 || dist < 20) {
+                            giantBird.state = 'ASCENDING';
+                        }
+                    } else if (giantBird.state === 'ASCENDING') {
+                        giantBird.z += 8;
+                        giantBird.x += Math.cos(giantBird.angle) * 8;
+                        giantBird.y += Math.sin(giantBird.angle) * 8;
+                        if (giantBird.z >= 200) {
+                            giantBird.state = 'CIRCLING';
+                            giantBird.diveTimer = 1200; 
+                        }
+                    }
+
+                    if (giantBird.state === 'FLEEING') {
+                        giantBird.z += 5;
+                        giantBird.x += Math.cos(giantBird.angle) * 10;
+                        giantBird.y += Math.sin(giantBird.angle) * 10;
+                        if (giantBird.z > 1000) {
+                            giantBird.active = false;
+                            giantBird.state = 'WAITING';
+                            giantBird.spawnTimer = 7200; 
+                        }
+                    }
+                }
+            }
+
             distanceTraveled += currentWorldSpeed * 0.02; 
             updateNavigationUI();
 
             if (player.hunger > 0) {
-                player.hunger -= 0.0022; // 10% plus rapide
+                // La faim descend plus vite si le premier oiseau a été chassé
+                player.hunger -= tutorialState.food ? 0.004 : 0.0022; 
             } else {
                 player.hunger = 0;
                 player.hp -= 0.02; 
                 if (player.hp <= 0) {
+                    // NOUVEAU : Logique de mort complète (Sauvegarde et Reset)
+                    checkAndSaveHighScore();
+                    
                     player.hp = player.maxHp;
                     player.hunger = player.maxHunger;
                     inventory.meat = 0;
+                    distanceTraveled = 0; // Remise à zéro de la distance
+                    dayCount = 1;         // Remise à zéro des jours
+                    timeOfDay = 8;        // Retour au matin
+                    
                     let firstTile = Array.from(raftTiles.keys())[0].split(',').map(Number);
                     player.x = firstTile[0] * TILE_SIZE + TILE_SIZE/2;
                     player.y = firstTile[1] * TILE_SIZE + TILE_SIZE/2;
+                    
+                    giantBird.active = false;
+                    giantBird.state = 'WAITING';
+                    giantBird.spawnTimer = 7200;
+
                     playSound('hit');
                 }
             }
             updateUI(); 
+
+            for (let i = sinkingTiles.length - 1; i >= 0; i--) {
+                let st = sinkingTiles[i];
+                st.z += 1.5; 
+                st.opacity -= 0.02; 
+                if (st.opacity <= 0) sinkingTiles.splice(i, 1);
+            }
 
             if (player.actionTimer > 0) player.actionTimer--; else player.currentAction = 'none';
 
@@ -1573,7 +1898,7 @@
                 if (b.x < -200 || b.x > canvas.width + 200) birds.splice(i, 1);
             }
 
-            if (Math.random() < 0.006) { // REDUIT DE 0.015 A 0.006
+            if (Math.random() < 0.006) {
                 let randType = 'wood';
                 let roll = Math.random();
                 if (roll > 0.85) randType = 'barrel';
@@ -1597,6 +1922,30 @@
                     if (Math.hypot(p.x - mScreen.x, p.y - mScreen.y) < 50) { playSound('hit'); manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; projectiles.splice(i, 1); continue; }
                 }
                 
+                // NOUVEAU : Collision Projectile vs Grand Oiseau
+                if (giantBird.active && (giantBird.state === 'DIVING' || giantBird.state === 'ASCENDING' || giantBird.state === 'CIRCLING')) {
+                    const bScreen = worldToScreen(giantBird.x, giantBird.y);
+                    bScreen.y -= giantBird.z;
+                    if (Math.hypot(p.x - bScreen.x, p.y - bScreen.y) < 50) {
+                        playSound('hit');
+                        giantBird.hp--;
+                        if (giantBird.hp <= 0) {
+                            giantBird.active = false;
+                            giantBird.state = 'WAITING';
+                            giantBird.spawnTimer = 18000; 
+                            for (let m = 0; m < 4; m++) {
+                                debrisList.push({ 
+                                    x: giantBird.x + (Math.random() * 80 - 40), 
+                                    y: giantBird.y + (Math.random() * 80 - 40), 
+                                    type: 'meat', isHooked: false, rot: Math.random() 
+                                });
+                            }
+                        }
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+
                 for (let j = birds.length - 1; j >= 0; j--) {
                     let b = birds[j];
                     if (Math.hypot(p.x - b.x, p.y - b.y) < 30) {
@@ -1636,12 +1985,9 @@
                     manta.timer++;
                     if (manta.timer >= manta.maxTimer) {
                         playSound('hit');
-                        raftTiles.delete(manta.targetTile.key); manta.state = 'FLEEING';
-                        const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
-                        if (`${pTileX},${pTileY}` === manta.targetTile.key) {
-                            let firstTile = Array.from(raftTiles.keys())[0].split(',').map(Number);
-                            player.x = firstTile[0] * TILE_SIZE + TILE_SIZE/2; player.y = firstTile[1] * TILE_SIZE + TILE_SIZE/2;
-                        }
+                        raftTiles.delete(manta.targetTile.key); 
+                        manta.state = 'FLEEING';
+                        checkRaftIntegrity(); 
                     }
                 }
             } else if (manta.state === 'FLEEING') {
@@ -1709,7 +2055,6 @@
             }
         }
 
-        // --- DRAW VISUALS OVERHAUL ---
         function drawPoly(pts, fill, stroke, lineWidth=1) {
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y);
@@ -1728,8 +2073,12 @@
                 return;
             }
 
-            drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
+            if (ASSETS.platform.loaded) {
+                ctx.drawImage(ASSETS.platform.img, top.x + ASSETS.platform.ox, top.y + ASSETS.platform.oy, ASSETS.platform.w, ASSETS.platform.h);
+                return;
+            }
 
+            drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
             ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
             for(let i=1; i<=3; i++) {
                 let p1 = worldToScreen(lx + (size/4)*i, ly);
@@ -1744,6 +2093,13 @@
         }
 
         function drawCraftingTable(lx, ly) {
+            const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2);
+            
+            if (ASSETS.table.loaded) {
+                ctx.drawImage(ASSETS.table.img, screen.x + ASSETS.table.ox, screen.y + ASSETS.table.oy, ASSETS.table.w, ASSETS.table.h);
+                return;
+            }
+
             const offset = 12; const size = TILE_SIZE - (offset*2); const height = 20;
             const top = worldToScreen(lx + offset, ly + offset); top.y -= height;
             const right = worldToScreen(lx + offset + size, ly + offset); right.y -= height;
@@ -1802,11 +2158,15 @@
 
             const x = screen.x; const y = screen.y - bob;
 
-            ctx.fillStyle = '#2980b9'; 
-            ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
-            ctx.fillStyle = '#e67e22'; drawPoly([{x:x-8, y:y-26}, {x:x+8, y:y-26}, {x:x+7, y:y-12}, {x:x-7, y:y-12}], '#e67e22', '#d35400');
-            ctx.fillStyle = '#f5b041'; ctx.fillRect(x - 6, y - 38, 12, 12);
-            ctx.fillStyle = '#5c4033'; ctx.fillRect(x - 7, y - 40, 14, 5); ctx.fillRect(x - 7, y - 40, 4, 10);
+            if (ASSETS.player.loaded) {
+                ctx.drawImage(ASSETS.player.img, x + ASSETS.player.ox, y + ASSETS.player.oy, ASSETS.player.w, ASSETS.player.h);
+            } else {
+                ctx.fillStyle = '#2980b9'; 
+                ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
+                ctx.fillStyle = '#e67e22'; drawPoly([{x:x-8, y:y-26}, {x:x+8, y:y-26}, {x:x+7, y:y-12}, {x:x-7, y:y-12}], '#e67e22', '#d35400');
+                ctx.fillStyle = '#f5b041'; ctx.fillRect(x - 6, y - 38, 12, 12);
+                ctx.fillStyle = '#5c4033'; ctx.fillRect(x - 7, y - 40, 14, 5); ctx.fillRect(x - 7, y - 40, 4, 10);
+            }
 
             if (activeTool === 'spear' && player.currentAction === 'spear') {
                 const angle = Math.atan2(mouse.y - y, mouse.x - x); const thrust = Math.sin((player.actionTimer / 15) * Math.PI) * 20; 
@@ -1836,22 +2196,66 @@
             ctx.save(); ctx.translate(screen.x, screen.y); ctx.translate(0, Math.sin((Date.now() + d.x)/300) * 4);
 
             if (d.type === 'wood') {
-                drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); 
-                drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); 
-                drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); 
+                if (ASSETS.wood.loaded) {
+                    ctx.drawImage(ASSETS.wood.img, ASSETS.wood.ox, ASSETS.wood.oy, ASSETS.wood.w, ASSETS.wood.h);
+                } else {
+                    drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); 
+                    drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); 
+                    drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); 
+                }
             } else if (d.type === 'scrap') {
-                drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); 
-                drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); 
+                if (ASSETS.scrap.loaded) {
+                    ctx.drawImage(ASSETS.scrap.img, ASSETS.scrap.ox, ASSETS.scrap.oy, ASSETS.scrap.w, ASSETS.scrap.h);
+                } else {
+                    drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); 
+                    drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); 
+                }
             } else if (d.type === 'meat') {
                 drawPoly([{x:-8,y:-4}, {x:8,y:-4}, {x:10,y:4}, {x:-10,y:4}], '#e74c3c', '#c0392b'); 
                 drawPoly([{x:-12,y:0}, {x:-8,y:-2}, {x:-8,y:2}], '#ecf0f1', '#bdc3c7'); 
                 drawPoly([{x:12,y:0}, {x:8,y:-2}, {x:8,y:2}], '#ecf0f1', '#bdc3c7'); 
             } else if (d.type === 'barrel') {
-                drawPoly([{x:-12,y:-6}, {x:12,y:-6}, {x:10,y:10}, {x:-10,y:10}], '#d35400', '#a04000'); 
-                drawPoly([{x:-13,y:-4}, {x:13,y:-4}, {x:13,y:0}, {x:-13,y:0}], '#7f8c8d', '#34495e'); 
-                drawPoly([{x:-11,y:4}, {x:11,y:4}, {x:11,y:8}, {x:-11,y:8}], '#7f8c8d', '#34495e'); 
-                drawPoly([{x:-12,y:-6}, {x:0,y:-10}, {x:12,y:-6}], '#e67e22', '#d35400'); 
+                if (ASSETS.barrel.loaded) {
+                    ctx.drawImage(ASSETS.barrel.img, ASSETS.barrel.ox, ASSETS.barrel.oy, ASSETS.barrel.w, ASSETS.barrel.h);
+                } else {
+                    drawPoly([{x:-12,y:-6}, {x:12,y:-6}, {x:10,y:10}, {x:-10,y:10}], '#d35400', '#a04000'); 
+                    drawPoly([{x:-13,y:-4}, {x:13,y:-4}, {x:13,y:0}, {x:-13,y:0}], '#7f8c8d', '#34495e'); 
+                    drawPoly([{x:-11,y:4}, {x:11,y:4}, {x:11,y:8}, {x:-11,y:8}], '#7f8c8d', '#34495e'); 
+                    drawPoly([{x:-12,y:-6}, {x:0,y:-10}, {x:12,y:-6}], '#e67e22', '#d35400'); 
+                }
             }
+            ctx.restore();
+        }
+
+        // NOUVEAU : Dessin du Grand Oiseau
+        function drawGiantBird() {
+            if (!giantBird.active) return;
+            const screenB = worldToScreen(giantBird.x, giantBird.y);
+            const drawY = screenB.y - giantBird.z;
+
+            ctx.save();
+            ctx.translate(screenB.x, drawY);
+
+            const flap = Math.sin(Date.now() / 80) * 15;
+
+            if (ASSETS.giantBird && ASSETS.giantBird.loaded) {
+                ctx.drawImage(ASSETS.giantBird.img, ASSETS.giantBird.ox, ASSETS.giantBird.oy, ASSETS.giantBird.w, ASSETS.giantBird.h);
+            } else {
+                drawPoly([{x: 0, y: -25}, {x: -15, y: 15}, {x: 0, y: 35}, {x: 15, y: 15}], '#2c3e50', '#1a252f');
+                drawPoly([{x: -15, y: 5}, {x: -50, y: -15 + flap}, {x: -5, y: 20}], '#34495e', '#2c3e50');
+                drawPoly([{x: 15, y: 5}, {x: 50, y: -15 + flap}, {x: 5, y: 20}], '#34495e', '#2c3e50');
+                drawPoly([{x: -10, y: 30}, {x: 0, y: 50}, {x: 10, y: 30}], '#1a252f', '#000000');
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath(); ctx.arc(-5, -10, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(5, -10, 3, 0, Math.PI*2); ctx.fill();
+            }
+
+            if (giantBird.hp < giantBird.maxHp && giantBird.state !== 'FLEEING') {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -50, 40, 6);
+                ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -50, 40 * (giantBird.hp/giantBird.maxHp), 6);
+            }
+
             ctx.restore();
         }
 
@@ -1862,13 +2266,15 @@
             
             if (manta.state === 'APPROACHING') ctx.globalAlpha = 0.5; 
             
-            drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); 
-            drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); 
-            
-            ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
-
-            ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-10, -10, 3, 0, Math.PI*2); ctx.arc(10, -10, 3, 0, Math.PI*2); ctx.fill();
+            if (ASSETS.manta.loaded) {
+                ctx.drawImage(ASSETS.manta.img, ASSETS.manta.ox, ASSETS.manta.oy, ASSETS.manta.w, ASSETS.manta.h);
+            } else {
+                drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); 
+                drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); 
+                ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
+                ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-10, -10, 3, 0, Math.PI*2); ctx.arc(10, -10, 3, 0, Math.PI*2); ctx.fill();
+            }
 
             if (manta.hp < manta.maxHp && manta.state !== 'FLEEING') {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -45, 40, 6);
@@ -1888,7 +2294,6 @@
         }
 
         function draw() {
-            // --- GESTION DU JOUR ET NUIT ---
             function lerpColorA(c1, c2, t) {
                 return {
                     r: Math.floor(c1.r + (c2.r - c1.r) * t),
@@ -1898,13 +2303,11 @@
                 };
             }
 
-            // Couleurs du Ciel
             const cNight = {r: 10, g: 14, b: 41, a: 0}; 
             const cOrange = {r: 253, g: 120, b: 80, a: 0}; 
             const cDay = {r: 116, g: 185, b: 255, a: 0}; 
             const cDim = {r: 90, g: 150, b: 220, a: 0};
 
-            // Couleurs du Filtre (Overlay de lumière)
             const oNight = {r: 5, g: 5, b: 20, a: 0.92}; 
             const oDusk = {r: 15, g: 10, b: 40, a: 0.6}; 
             const oOrange = {r: 200, g: 80, b: 0, a: 0.3}; 
@@ -1912,34 +2315,14 @@
 
             let sky, over;
             
-            // Logique horaire très précise pour un cycle progressif parfait
-            if (timeOfDay < 5) {
-                sky = cNight; over = oNight; // Nuit noire (00h - 05h)
-            } else if (timeOfDay < 7) {
-                let t = (timeOfDay - 5) / 2; // Aube (05h - 07h)
-                sky = lerpColorA(cNight, cOrange, t);
-                over = lerpColorA(oNight, oOrange, t);
-            } else if (timeOfDay < 9) {
-                let t = (timeOfDay - 7) / 2; // Matin (07h - 09h)
-                sky = lerpColorA(cOrange, cDay, t);
-                over = lerpColorA(oOrange, oDay, t);
-            } else if (timeOfDay < 17) {
-                sky = cDay; over = oDay; // Plein jour (09h - 17h)
-            } else if (timeOfDay < 19) {
-                let t = (timeOfDay - 17) / 2; // Fin d'après midi (17h - 19h)
-                sky = lerpColorA(cDay, cOrange, t);
-                over = lerpColorA(oDay, oOrange, t);
-            } else if (timeOfDay < 20.5) {
-                let t = (timeOfDay - 19) / 1.5; // Crépuscule (19h - 20h30)
-                sky = lerpColorA(cOrange, cDim, t);
-                over = lerpColorA(oOrange, oDusk, t);
-            } else if (timeOfDay < 22) {
-                let t = (timeOfDay - 20.5) / 1.5; // Nuit tombante (20h30 - 22h)
-                sky = lerpColorA(cDim, cNight, t);
-                over = lerpColorA(oDusk, oNight, t);
-            } else {
-                sky = cNight; over = oNight; // Nuit noire (22h - 00h)
-            }
+            if (timeOfDay < 5) { sky = cNight; over = oNight; } 
+            else if (timeOfDay < 7) { let t = (timeOfDay - 5) / 2; sky = lerpColorA(cNight, cOrange, t); over = lerpColorA(oNight, oOrange, t); } 
+            else if (timeOfDay < 9) { let t = (timeOfDay - 7) / 2; sky = lerpColorA(cOrange, cDay, t); over = lerpColorA(oOrange, oDay, t); } 
+            else if (timeOfDay < 17) { sky = cDay; over = oDay; } 
+            else if (timeOfDay < 19) { let t = (timeOfDay - 17) / 2; sky = lerpColorA(cDay, cOrange, t); over = lerpColorA(oDay, oOrange, t); } 
+            else if (timeOfDay < 20.5) { let t = (timeOfDay - 19) / 1.5; sky = lerpColorA(cOrange, cDim, t); over = lerpColorA(oOrange, oDusk, t); } 
+            else if (timeOfDay < 22) { let t = (timeOfDay - 20.5) / 1.5; sky = lerpColorA(cDim, cNight, t); over = lerpColorA(oDusk, oNight, t); } 
+            else { sky = cNight; over = oNight; }
 
             ctx.fillStyle = `rgb(${sky.r}, ${sky.g}, ${sky.b})`; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1998,6 +2381,17 @@
                 }
             }
 
+            for (let st of sinkingTiles) {
+                ctx.save();
+                ctx.translate(0, st.z);
+                ctx.globalAlpha = st.opacity;
+                drawTexturedTile(st.x * TILE_SIZE, st.y * TILE_SIZE, TILE_SIZE, '#CD853F');
+                if (st.data.hasTable) drawCraftingTable(st.x * TILE_SIZE, st.y * TILE_SIZE);
+                if (st.data.hasSail) drawSail(st.x * TILE_SIZE, st.y * TILE_SIZE);
+                if (st.data.hasTorch) drawTorch(st.x * TILE_SIZE, st.y * TILE_SIZE);
+                ctx.restore();
+            }
+
             if (activeTool === 'platform') {
                 let buildables = getBuildableTiles().sort((a, b) => (a.x + a.y) - (b.x + b.y));
                 for (let b of buildables) {
@@ -2024,6 +2418,7 @@
             }
             
             drawManta();
+            drawGiantBird();
             drawPlayer();
 
             for(let p of projectiles) { 
@@ -2037,8 +2432,13 @@
                 if (hook.state === 'THROWN' || hook.state === 'RETRACTING') {
                     ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(hook.x, hook.y); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.save(); ctx.translate(hook.x, hook.y);
-                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
-                    drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); 
+                    
+                    if (ASSETS.hook && ASSETS.hook.loaded) {
+                        ctx.drawImage(ASSETS.hook.img, -15, -15, 30, 30);
+                    } else {
+                        ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
+                        drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); 
+                    }
                     ctx.restore();
                 }
 
@@ -2060,17 +2460,21 @@
                 drawPoly([{x:b.x, y:b.y}, {x:b.x + 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color2);
             }
 
-            // --- COUCHE D'OBSCURITE & LUMIERES ---
+            // Ombres pour les créatures volantes hautes
+            if (giantBird.active && giantBird.z > 0 && over.a < 0.8) {
+                const screenB = worldToScreen(giantBird.x, giantBird.y);
+                const shadowSize = Math.max(5, 30 - giantBird.z/15);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath(); ctx.ellipse(screenB.x, screenB.y, shadowSize, shadowSize * 0.5, 0, 0, Math.PI*2); ctx.fill();
+            }
+
             if (over.a > 0.01) {
-                // ESSENTIEL : Effacer le canvas de lumière à chaque frame
                 lightCtx.clearRect(0, 0, lightCanvas.width, lightCanvas.height);
                 
-                // Remplir le filtre d'obscurité colorée
                 lightCtx.globalCompositeOperation = 'source-over';
                 lightCtx.fillStyle = `rgba(${over.r}, ${over.g}, ${over.b}, ${over.a})`;
                 lightCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
 
-                // "Creuser" des trous de lumière
                 lightCtx.globalCompositeOperation = 'destination-out';
                 
                 function drawLightRadius(x, y, radius, intensity) {
