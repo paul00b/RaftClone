@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyRaft</title>
+    <title>SkyRaft - Prototype Crafting</title>
     <!-- Police Pixel -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -67,7 +67,6 @@
             100% { transform: translateY(0px); }
         }
 
-        /* NOUVEAU : Styles pour les textes de l'écran titre */
         .game-goal {
             font-family: 'Press Start 2P', monospace;
             font-size: 0.8rem;
@@ -163,6 +162,22 @@
         #distance-panel .dist { font-size: 1rem; color: #f1c40f; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
         #distance-panel .speed { font-size: 0.6rem; color: #bdc3c7; text-transform: uppercase; }
 
+        /* Indicateur de rotation */
+        #rotation-hint {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 90px;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #f1c40f;
+            font-weight: bold;
+            pointer-events: none;
+            display: none;
+        }
+
         /* --- TUTORIEL (A DROITE) --- */
         #tutorial-panel {
             position: absolute; right: 20px; top: 100px;
@@ -228,7 +243,7 @@
 
         /* --- HOTBAR --- */
         #hotbar-container { display: flex; flex-direction: column; align-items: center; padding-bottom: 25px; gap: 12px; }
-        #hotbar { display: flex; gap: 8px; padding: 8px; flex-wrap: wrap; justify-content: center; max-width: 90vw; }
+        #hotbar { display: flex; gap: 8px; padding: 8px; flex-wrap: wrap; justify-content: center; max-width: 95vw; }
 
         .slot {
             width: 64px; height: 64px;
@@ -361,6 +376,8 @@
             #distance-panel .dist { font-size: 0.7rem; }
             #distance-panel .speed { font-size: 0.4rem; margin-top: 5px; }
             
+            #rotation-hint { top: 60px; font-size: 0.6rem; padding: 4px 10px; }
+
             #tutorial-panel { width: 200px; padding: 10px; right: 10px; top: 70px; font-size: 0.75rem; }
             .tutorial-title { font-size: 0.6rem; margin-bottom: 8px; }
             .tutorial-task { font-size: 0.75rem; margin-bottom: 6px; gap: 5px; }
@@ -378,7 +395,6 @@
     <div id="start-screen">
         <h1 class="pixel-title">SkyRaft</h1>
         
-        <!-- NOUVEAU : Objectif et Record -->
         <p class="game-goal">Objectif : Survis et parcours le plus de kilomètres possible dans les cieux avant que ton radeau ne soit détruit ou que tu ne meures de faim !</p>
         <p class="high-score">Record : <span id="ui-highscore">0.0</span> km</p>
 
@@ -409,6 +425,8 @@
                 <div class="speed"><span id="ui-speed">5</span> km/h</div>
             </div>
 
+            <div id="rotation-hint">[R] pour tourner</div>
+
             <div style="display: flex; gap: 8px;">
                 <button class="btn-icon" onclick="toggleMute()">
                     <span class="icon" id="icon-mute">🔊</span>
@@ -425,7 +443,7 @@
             </div>
         </div>
 
-        <!-- TUTORIEL TO-DO LIST (Vide, générée en JS) -->
+        <!-- TUTORIEL TO-DO LIST -->
         <div id="tutorial-panel" class="panel" style="opacity: 0;"></div>
 
         <div id="hotbar-container">
@@ -440,6 +458,12 @@
                 </div>
                 <div class="slot" id="slot-2" onclick="setActiveTool('platform')">
                     <div class="slot-key">2</div><div class="slot-icon">🟫</div><div class="slot-qty" id="ui-plat">0</div>
+                </div>
+                <div class="slot" id="slot-9" onclick="setActiveTool('wall')">
+                    <div class="slot-key">9</div><div class="slot-icon">🧱</div><div class="slot-qty" id="ui-wall">0</div>
+                </div>
+                <div class="slot" id="slot-0" onclick="setActiveTool('stairs')">
+                    <div class="slot-key">0</div><div class="slot-icon">🪜</div><div class="slot-qty" id="ui-stairs">0</div>
                 </div>
                 <div class="slot" id="slot-3" onclick="setActiveTool('table')">
                     <div class="slot-key">3</div><div class="slot-icon">🧰</div><div class="slot-qty" id="ui-tab">0</div>
@@ -482,6 +506,26 @@
                     </div>
                 </div>
                 <button class="btn-craft" onclick="craft('platform', 2, 1)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🧱</div>
+                    <div class="craft-details">
+                        <h4>Mur en bois</h4>
+                        <div class="craft-cost"><span class="cost-pill">3 🪵</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" onclick="craft('wall', 3, 0)">Fabriquer</button>
+            </div>
+            <div class="craft-item">
+                <div class="craft-info">
+                    <div class="craft-icon">🪜</div>
+                    <div class="craft-details">
+                        <h4>Escalier</h4>
+                        <div class="craft-cost"><span class="cost-pill">4 🪵</span> <span class="cost-pill">1 🔩</span></div>
+                    </div>
+                </div>
+                <button class="btn-craft" onclick="craft('stairs', 4, 1)">Fabriquer</button>
             </div>
             <div class="craft-item">
                 <div class="craft-info">
@@ -605,7 +649,9 @@
             table: { src: '', w: 50, h: 40, ox: -25, oy: -35 },
             manta: { src: '', w: 100, h: 100, ox: -50, oy: -50 },
             player: { src: '', w: 32, h: 48, ox: -16, oy: -40 },
-            giantBird: { src: '', w: 120, h: 120, ox: -60, oy: -60 }
+            giantBird: { src: '', w: 120, h: 120, ox: -60, oy: -60 },
+            wall: { src: '', w: 60, h: 65, ox: -30, oy: -45 }, 
+            stairs: { src: '', w: 60, h: 65, ox: -30, oy: -45 } 
         };
 
         const ASSETS = {};
@@ -643,72 +689,53 @@
         let currentWorldSpeed = 0.4; 
         let distanceTraveled = 0; 
         
-        // NOUVEAU : Chargement du record depuis la mémoire locale
         let highScore = parseFloat(localStorage.getItem('skyraft_highscore')) || 0;
 
         const TILE_SIZE = 60;
+        const Z_HEIGHT = 45; 
         
-        const inventory = { wood: 10, scrap: 10, cloth: 0, platforms: 0, tables: 0, arrows: 0, meat: 0, sails: 0, torches: 0 };
+        const inventory = { wood: 50, scrap: 50, cloth: 0, platforms: 0, walls: 0, stairs: 0, tables: 0, arrows: 0, meat: 0, sails: 0, torches: 0 };
         const unlockedTools = { axe: false, spear: false, bow: false };
         let hasCraftedSail = false;
         let activeTool = 'hook'; 
+        let buildRotation = 0; // 0: N, 1: E, 2: S, 3: W
         
         let menus = { basic: false, advanced: false, settings: false };
 
         let currentTutorialPhase = 0;
         const tutorialState = {
-            hookDebris: false,
-            craftPlatform: false,
-            craftTorch: false,
-            placePlatform: false,
-            placeTable: false,
-            bowAndArrow: false,
-            food: false,
-            eat: false,
-            sail: false
+            hookDebris: false, craftPlatform: false, craftTorch: false, placePlatform: false,
+            placeTable: false, bowAndArrow: false, food: false, eat: false, sail: false
         };
 
         const tutorialPhases = [
-            {
-                title: "Les Bases",
-                tasks: [
-                    { id: 'hookDebris', text: '1. Ramasser un débris' },
-                    { id: 'craftPlatform', text: '2. Crafter un plancher' },
-                    { id: 'craftTorch', text: '3. Crafter une torche' },
-                    { id: 'placePlatform', text: '4. Poser un plancher' }
-                ]
-            },
-            {
-                title: "L'Établi & Chasse",
-                tasks: [
-                    { id: 'placeTable', text: '1. Poser un Établi' },
-                    { id: 'bowAndArrow', text: '2. Créer arc et flèches' },
-                    { id: 'food', text: '3. Chasser un oiseau' },
-                    { id: 'eat', text: '4. Manger de la viande' }
-                ]
-            },
-            {
-                title: "Prendre le large",
-                tasks: [
-                    { id: 'sail', text: '1. Poser une voile' }
-                ]
-            }
+            { title: "Les Bases", tasks: [ { id: 'hookDebris', text: '1. Ramasser un débris' }, { id: 'craftPlatform', text: '2. Crafter un plancher' }, { id: 'craftTorch', text: '3. Crafter une torche' }, { id: 'placePlatform', text: '4. Poser un plancher' } ] },
+            { title: "L'Établi & Chasse", tasks: [ { id: 'placeTable', text: '1. Poser un Établi' }, { id: 'bowAndArrow', text: '2. Créer arc et flèches' }, { id: 'food', text: '3. Chasser un oiseau' }, { id: 'eat', text: '4. Manger de la viande' } ] },
+            { title: "Prendre le large", tasks: [ { id: 'sail', text: '1. Poser une voile' } ] }
         ];
 
+        // --- GESTION DES TUILES 3D ---
         let raftTiles = new Map();
-        raftTiles.set('0,0', { hasTable: false, hasSail: false, hasTorch: false }); 
-        raftTiles.set('1,0', { hasTable: false, hasSail: false, hasTorch: false }); 
-        raftTiles.set('0,1', { hasTable: false, hasSail: false, hasTorch: false }); 
-        raftTiles.set('1,1', { hasTable: false, hasSail: false, hasTorch: false }); 
+        function initRaft() {
+            raftTiles.clear();
+            const getDef = () => ({ hasTable: false, hasSail: false, hasTorch: false, walls: [false, false, false, false], stairsDir: -1 });
+            raftTiles.set('0,0', { floor0: getDef(), floor1: null }); 
+            raftTiles.set('1,0', { floor0: getDef(), floor1: null }); 
+            raftTiles.set('0,1', { floor0: getDef(), floor1: null }); 
+            raftTiles.set('1,1', { floor0: getDef(), floor1: null }); 
+        }
+        initRaft();
         
         let sinkingTiles = []; 
-        
         let hoveredBuildTile = null; 
-        let hoveredExistingTile = null;
+        let hoveredExistingTile = null; 
         
         const PLAYER_SPEED = 2.2;
         const player = {
-            x: TILE_SIZE, y: TILE_SIZE, width: 16, height: 35,
+            x: TILE_SIZE, y: TILE_SIZE, 
+            baseLevel: 0, 
+            visualZ: 0,  
+            width: 16, height: 35,
             hp: 100, maxHp: 100, 
             hunger: 100, maxHunger: 100, 
             actionTimer: 0, currentAction: 'none',
@@ -716,50 +743,25 @@
         };
 
         const camera = { x: TILE_SIZE, y: TILE_SIZE }; 
-
         const keyBinds = { up: 'z', down: 's', left: 'q', right: 'd', build: 'b', mute: 'm' };
         const keys = {}; 
         let isRebinding = null; 
-
         const mouse = { x: 0, y: 0, isDown: false };
         const vJoystick = { active: false, id: null, baseX: 0, baseY: 0, knobX: 0, knobY: 0, dirX: 0, dirY: 0, maxDist: 50 };
         let actionTouchId = null;
         
-        let clouds = [];
-        let windLines = []; 
-        let debrisList = [];
-        let projectiles = [];
-        let birds = [];
-        
+        let clouds = []; let windLines = []; let debrisList = []; let projectiles = []; let birds = [];
         let hasCraftedTable = false; 
         
-        const hook = {
-            state: 'IDLE', charge: 0, maxCharge: 400, chargeRate: 6,
-            x: 0, y: 0, targetX: 0, targetY: 0, speed: 8, caughtDebris: []
-        };
-
-        const manta = {
-            state: 'COOLDOWN', x: 0, y: 0, targetTile: null,
-            hp: 8, maxHp: 8, timer: 0, maxTimer: 900, cooldown: 900, speed: 2
-        };
-
-        // --- NOUVEAU : GRAND OISEAU BOSS ---
-        const giantBird = {
-            active: false,
-            state: 'WAITING',
-            x: 0, y: 0, z: 200,
-            hp: 6, maxHp: 6, 
-            diveTimer: 0,
-            spawnTimer: 7200, // 2 minutes à 60fps
-            angle: 0
-        };
+        const hook = { state: 'IDLE', charge: 0, maxCharge: 400, chargeRate: 6, x: 0, y: 0, targetX: 0, targetY: 0, speed: 8, caughtDebris: [] };
+        const manta = { state: 'COOLDOWN', x: 0, y: 0, targetTile: null, hp: 8, maxHp: 8, timer: 0, maxTimer: 900, cooldown: 900, speed: 2 };
+        const giantBird = { active: false, state: 'WAITING', x: 0, y: 0, z: 200, hp: 6, maxHp: 6, diveTimer: 0, spawnTimer: 7200, angle: 0 };
 
         function checkRaftIntegrity() {
             if (raftTiles.size === 0) return;
             let root = null;
-            if (raftTiles.has('0,0')) {
-                root = '0,0';
-            } else {
+            if (raftTiles.has('0,0')) root = '0,0';
+            else {
                 let minDist = Infinity;
                 for (let key of raftTiles.keys()) {
                     let [x, y] = key.split(',').map(Number);
@@ -767,7 +769,6 @@
                     if (dist < minDist) { minDist = dist; root = key; }
                 }
             }
-
             if (!root) return;
 
             let visited = new Set();
@@ -779,17 +780,12 @@
                 let [cx, cy] = current.split(',').map(Number);
                 let neighbors = [`${cx+1},${cy}`, `${cx-1},${cy}`, `${cx},${cy+1}`, `${cx},${cy-1}`];
                 for (let n of neighbors) {
-                    if (raftTiles.has(n) && !visited.has(n)) {
-                        visited.add(n);
-                        queue.push(n);
-                    }
+                    if (raftTiles.has(n) && !visited.has(n)) { visited.add(n); queue.push(n); }
                 }
             }
 
             let toRemove = [];
-            for (let key of raftTiles.keys()) {
-                if (!visited.has(key)) toRemove.push(key);
-            }
+            for (let key of raftTiles.keys()) { if (!visited.has(key)) toRemove.push(key); }
 
             for (let key of toRemove) {
                 let data = raftTiles.get(key);
@@ -810,12 +806,12 @@
                     let [rx, ry] = newRoot.split(',').map(Number);
                     player.x = rx * TILE_SIZE + TILE_SIZE/2;
                     player.y = ry * TILE_SIZE + TILE_SIZE/2;
+                    player.baseLevel = 0;
                     playSound('hit');
                 }
             }
         }
 
-        // --- NOUVEAU : Fonction de sauvegarde du High Score ---
         function checkAndSaveHighScore() {
             if (distanceTraveled > highScore) {
                 highScore = distanceTraveled;
@@ -824,7 +820,6 @@
             }
         }
         
-        // Initialisation de l'affichage du record au démarrage
         document.getElementById('ui-highscore').innerText = (highScore / 1000).toFixed(1);
 
         function startGame() {
@@ -839,31 +834,20 @@
         function returnToTitle() {
             initAudio(); playSound('ui');
             closeAllMenus();
-            
-            checkAndSaveHighScore(); // Sauvegarde avant de quitter
-            
+            checkAndSaveHighScore(); 
             for (let k in keys) keys[k] = false; 
-            mouse.isDown = false;
-            vJoystick.active = false;
-            actionTouchId = null;
+            mouse.isDown = false; vJoystick.active = false; actionTouchId = null;
             gameState = 'START';
             document.getElementById('ui-layer').style.display = 'none';
             document.getElementById('start-screen').style.display = 'flex';
         }
 
-        let audioCtx;
-        let musicGainNode;
-        let windGainNode;
-        let isMusicPlaying = false;
-        let currentMusicVolume = 0.05; 
+        let audioCtx; let musicGainNode; let windGainNode; let isMusicPlaying = false; let currentMusicVolume = 0.05; 
 
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (!isMusicPlaying && gameState === 'PLAYING') {
-                startProceduralMusic();
-                startWindSound();
-            }
+            if (!isMusicPlaying && gameState === 'PLAYING') { startProceduralMusic(); startWindSound(); }
         }
 
         function updateMusicVolume(val) {
@@ -876,8 +860,7 @@
 
         let isMuted = false;
         function toggleMute() {
-            initAudio(); 
-            isMuted = !isMuted;
+            initAudio(); isMuted = !isMuted;
             document.getElementById('icon-mute').innerText = isMuted ? '🔇' : '🔊';
             if (audioCtx) {
                 if (isMuted) {
@@ -898,20 +881,10 @@
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1; 
 
-            const noiseSource = audioCtx.createBufferSource();
-            noiseSource.buffer = buffer;
-            noiseSource.loop = true;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = 400; 
-
-            windGainNode = audioCtx.createGain();
-            windGainNode.gain.value = currentMusicVolume * 0.05; 
-
-            noiseSource.connect(filter);
-            filter.connect(windGainNode);
-            windGainNode.connect(audioCtx.destination);
+            const noiseSource = audioCtx.createBufferSource(); noiseSource.buffer = buffer; noiseSource.loop = true;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400; 
+            windGainNode = audioCtx.createGain(); windGainNode.gain.value = currentMusicVolume * 0.05; 
+            noiseSource.connect(filter); filter.connect(windGainNode); windGainNode.connect(audioCtx.destination);
             noiseSource.start();
 
             function modulateWind() {
@@ -927,17 +900,12 @@
         function startProceduralMusic() {
             if (!audioCtx || isMusicPlaying) return;
             isMusicPlaying = true;
-            
-            musicGainNode = audioCtx.createGain();
-            musicGainNode.gain.value = currentMusicVolume;
-            musicGainNode.connect(audioCtx.destination);
-
+            musicGainNode = audioCtx.createGain(); musicGainNode.gain.value = currentMusicVolume; musicGainNode.connect(audioCtx.destination);
             const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
 
             function playAmbientNote() {
                 if (!isMusicPlaying) return;
-                const osc = audioCtx.createOscillator();
-                const noteGain = audioCtx.createGain();
+                const osc = audioCtx.createOscillator(); const noteGain = audioCtx.createGain();
                 const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
                 if (panner) panner.pan.value = (Math.random() * 1.8) - 0.9; 
 
@@ -947,42 +915,25 @@
                 osc.frequency.value = freq;
 
                 const now = audioCtx.currentTime;
-                const attack = 1.0 + Math.random() * 2.0; 
-                const release = 3.0 + Math.random() * 4.0;
+                const attack = 1.0 + Math.random() * 2.0; const release = 3.0 + Math.random() * 4.0;
                 
                 noteGain.gain.setValueAtTime(0, now);
                 noteGain.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.04, now + attack); 
                 noteGain.gain.linearRampToValueAtTime(0, now + attack + release);
 
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 3500;
-
-                osc.connect(filter);
-                filter.connect(noteGain);
-                
-                if (panner) { noteGain.connect(panner); panner.connect(musicGainNode); } 
-                else { noteGain.connect(musicGainNode); }
-
-                osc.start(now);
-                osc.stop(now + attack + release);
-
+                const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 3500;
+                osc.connect(filter); filter.connect(noteGain);
+                if (panner) { noteGain.connect(panner); panner.connect(musicGainNode); } else { noteGain.connect(musicGainNode); }
+                osc.start(now); osc.stop(now + attack + release);
                 setTimeout(playAmbientNote, 500 + Math.random() * 2500);
             }
-            
-            playAmbientNote();
-            setTimeout(playAmbientNote, 800);
-            setTimeout(playAmbientNote, 1600);
-            setTimeout(playAmbientNote, 2400);
-            setTimeout(playAmbientNote, 3200);
+            playAmbientNote(); setTimeout(playAmbientNote, 800); setTimeout(playAmbientNote, 1600); setTimeout(playAmbientNote, 2400); setTimeout(playAmbientNote, 3200);
         }
 
         function playSound(type) {
             if (!audioCtx) return; 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
             
             switch(type) {
@@ -993,9 +944,7 @@
                     osc2.type = 'sine'; osc2.frequency.setValueAtTime(800, now+0.1); osc2.frequency.exponentialRampToValueAtTime(400, now + 0.2);
                     gain2.gain.setValueAtTime(0.3, now+0.1); gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
                     osc2.connect(gain2); gain2.connect(audioCtx.destination);
-                    osc.start(now); osc.stop(now + 0.1);
-                    osc2.start(now+0.1); osc2.stop(now + 0.2);
-                    break;
+                    osc.start(now); osc.stop(now + 0.1); osc2.start(now+0.1); osc2.stop(now + 0.2); break;
                 case 'throw':
                     osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
                     gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
@@ -1033,9 +982,7 @@
                     gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
                     osc.start(now); osc.stop(now + 0.4); break;
                 case 'success':
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.setValueAtTime(600, now + 0.1);
-                    osc.frequency.setValueAtTime(800, now + 0.2);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
                     gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.4);
                     osc.start(now); osc.stop(now + 0.4); break;
             }
@@ -1044,96 +991,47 @@
         function loadTutorialPhase(index) {
             if (index >= tutorialPhases.length) {
                 const panel = document.getElementById('tutorial-panel');
-                if(panel) {
-                    panel.style.transition = 'opacity 1s ease';
-                    panel.style.opacity = '0';
-                    setTimeout(() => panel.style.display = 'none', 1000);
-                }
+                if(panel) { panel.style.transition = 'opacity 1s ease'; panel.style.opacity = '0'; setTimeout(() => panel.style.display = 'none', 1000); }
                 return;
             }
-            
-            const phase = tutorialPhases[index];
-            const panel = document.getElementById('tutorial-panel');
-            panel.style.opacity = '0'; 
+            const phase = tutorialPhases[index]; const panel = document.getElementById('tutorial-panel'); panel.style.opacity = '0'; 
             
             setTimeout(() => {
-                let html = `<div class="tutorial-title">${phase.title}</div>`;
-                let visibleTasks = 0;
-                
+                let html = `<div class="tutorial-title">${phase.title}</div>`; let visibleTasks = 0;
                 phase.tasks.forEach(task => {
                     const isDone = tutorialState[task.id];
-                    if (!isDone) {
-                        html += `<div class="tutorial-task" id="tut-${task.id}" style="max-height: 100px; opacity: 1; margin-bottom: 12px;">
-                                    <span class="check">⬜</span> ${task.text}
-                                 </div>`;
-                        visibleTasks++;
-                    }
+                    if (!isDone) { html += `<div class="tutorial-task" id="tut-${task.id}" style="max-height: 100px; opacity: 1; margin-bottom: 12px;"><span class="check">⬜</span> ${task.text}</div>`; visibleTasks++; }
                 });
                 
-                if (visibleTasks > 0) {
-                    panel.innerHTML = html;
-                    panel.style.transition = 'opacity 0.5s ease';
-                    panel.style.opacity = '1'; 
-                } else {
-                    currentTutorialPhase++;
-                    loadTutorialPhase(currentTutorialPhase);
-                }
+                if (visibleTasks > 0) { panel.innerHTML = html; panel.style.transition = 'opacity 0.5s ease'; panel.style.opacity = '1'; } 
+                else { currentTutorialPhase++; loadTutorialPhase(currentTutorialPhase); }
             }, 500);
         }
 
         function checkTutorial(taskId) {
             if (tutorialState[taskId]) return; 
-            
             tutorialState[taskId] = true;
-            
             const el = document.getElementById(`tut-${taskId}`);
             if (el) {
-                playSound('success');
-                el.classList.add('done');
-                el.querySelector('.check').innerText = '✅';
-                
+                playSound('success'); el.classList.add('done'); el.querySelector('.check').innerText = '✅';
                 el.style.maxHeight = el.scrollHeight + 'px';
-                setTimeout(() => {
-                    el.style.opacity = '0';
-                    el.style.maxHeight = '0px';
-                    el.style.marginBottom = '0px';
-                    setTimeout(() => el.style.display = 'none', 500);
-                }, 1500);
+                setTimeout(() => { el.style.opacity = '0'; el.style.maxHeight = '0px'; el.style.marginBottom = '0px'; setTimeout(() => el.style.display = 'none', 500); }, 1500);
             }
 
             if (currentTutorialPhase >= tutorialPhases.length) return;
             const currentPhaseTasks = tutorialPhases[currentTutorialPhase].tasks.map(t => t.id);
             const allDone = currentPhaseTasks.every(tId => tutorialState[tId]);
-            
-            if (allDone) {
-                setTimeout(() => {
-                    currentTutorialPhase++;
-                    loadTutorialPhase(currentTutorialPhase);
-                }, 2000);
-            }
+            if (allDone) { setTimeout(() => { currentTutorialPhase++; loadTutorialPhase(currentTutorialPhase); }, 2000); }
         }
 
-        function checkBowAndArrow() {
-            if (unlockedTools.bow && inventory.arrows > 0) {
-                checkTutorial('bowAndArrow');
-            }
-        }
+        function checkBowAndArrow() { if (unlockedTools.bow && inventory.arrows > 0) checkTutorial('bowAndArrow'); }
 
         function updateNavigationUI() {
             document.getElementById('ui-day').innerText = dayCount; 
-
-            const distEl = document.getElementById('ui-distance');
-            const unitEl = document.getElementById('ui-dist-unit');
-            if (distanceTraveled < 1000) {
-                distEl.innerText = Math.floor(distanceTraveled);
-                unitEl.innerText = 'm';
-            } else {
-                distEl.innerText = (distanceTraveled / 1000).toFixed(1);
-                unitEl.innerText = 'km';
-            }
-            
-            const speedKmh = Math.round(currentWorldSpeed * 12.5);
-            document.getElementById('ui-speed').innerText = speedKmh;
+            const distEl = document.getElementById('ui-distance'); const unitEl = document.getElementById('ui-dist-unit');
+            if (distanceTraveled < 1000) { distEl.innerText = Math.floor(distanceTraveled); unitEl.innerText = 'm'; } 
+            else { distEl.innerText = (distanceTraveled / 1000).toFixed(1); unitEl.innerText = 'km'; }
+            const speedKmh = Math.round(currentWorldSpeed * 12.5); document.getElementById('ui-speed').innerText = speedKmh;
         }
 
         function updateUI() {
@@ -1141,148 +1039,88 @@
             document.getElementById('ui-scrap').innerText = inventory.scrap;
             document.getElementById('ui-cloth').innerText = inventory.cloth;
             document.getElementById('ui-plat').innerText = inventory.platforms > 0 ? inventory.platforms : '';
+            document.getElementById('ui-wall').innerText = inventory.walls > 0 ? inventory.walls : '';
+            document.getElementById('ui-stairs').innerText = inventory.stairs > 0 ? inventory.stairs : '';
             document.getElementById('ui-tab').innerText = inventory.tables > 0 ? inventory.tables : '';
             document.getElementById('ui-arr').innerText = inventory.arrows > 0 ? inventory.arrows : '';
             document.getElementById('ui-sail').innerText = inventory.sails > 0 ? inventory.sails : '';
             document.getElementById('ui-torch').innerText = inventory.torches > 0 ? inventory.torches : '';
             
-            const hungerBar = document.getElementById('ui-hunger-bar');
-            const hungerLabel = document.getElementById('hunger-label');
+            const hungerBar = document.getElementById('ui-hunger-bar'); const hungerLabel = document.getElementById('hunger-label');
             hungerBar.style.width = (player.hunger / player.maxHunger * 100) + '%';
             
-            if (player.hunger <= 25) {
-                hungerLabel.innerHTML = 'FAIM ⚠️';
-                hungerLabel.classList.add('text-warning');
-                hungerBar.style.backgroundColor = '#e74c3c';
-            } else {
-                hungerLabel.innerHTML = 'FAIM';
-                hungerLabel.classList.remove('text-warning');
-                hungerBar.style.backgroundColor = '#e67e22';
-            }
+            if (player.hunger <= 25) { hungerLabel.innerHTML = 'FAIM ⚠️'; hungerLabel.classList.add('text-warning'); hungerBar.style.backgroundColor = '#e74c3c'; } 
+            else { hungerLabel.innerHTML = 'FAIM'; hungerLabel.classList.remove('text-warning'); hungerBar.style.backgroundColor = '#e67e22'; }
 
             document.getElementById('ui-hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
 
-            if (hasCraftedSail) {
-                document.getElementById('slot-7').classList.remove('hidden-slot');
-            }
+            if (hasCraftedSail) document.getElementById('slot-7').classList.remove('hidden-slot');
 
             const meatSlot = document.getElementById('slot-meat');
-            if (inventory.meat > 0) {
-                meatSlot.classList.remove('hidden-food');
-                document.getElementById('ui-meat-hotbar').innerText = inventory.meat;
-            } else {
-                meatSlot.classList.add('hidden-food');
-            }
+            if (inventory.meat > 0) { meatSlot.classList.remove('hidden-food'); document.getElementById('ui-meat-hotbar').innerText = inventory.meat; } 
+            else { meatSlot.classList.add('hidden-food'); }
 
             if (unlockedTools.axe) document.getElementById('slot-4').classList.remove('locked');
             if (unlockedTools.spear) document.getElementById('slot-5').classList.remove('locked');
             if (unlockedTools.bow) document.getElementById('slot-6').classList.remove('locked');
 
-            const sailCraftItem = document.getElementById('craft-item-sail');
-            const sailCraftBtn = document.getElementById('btn-craft-sail-action');
+            const sailCraftItem = document.getElementById('craft-item-sail'); const sailCraftBtn = document.getElementById('btn-craft-sail-action');
             if (sailCraftItem && sailCraftBtn) {
-                if (inventory.wood >= 6 && inventory.scrap >= 4 && inventory.cloth >= 5) {
-                    sailCraftItem.style.filter = 'none';
-                    sailCraftBtn.disabled = false;
-                } else {
-                    sailCraftItem.style.filter = 'grayscale(100%) opacity(0.6)';
-                    sailCraftBtn.disabled = true;
-                }
+                if (inventory.wood >= 6 && inventory.scrap >= 4 && inventory.cloth >= 5) { sailCraftItem.style.filter = 'none'; sailCraftBtn.disabled = false; } 
+                else { sailCraftItem.style.filter = 'grayscale(100%) opacity(0.6)'; sailCraftBtn.disabled = true; }
             }
 
             document.getElementById('ui-build-key-hint').innerText = keyBinds.build.toUpperCase();
             document.getElementById('ui-mute-key-hint').innerText = keyBinds.mute.toUpperCase();
+
+            const rotHint = document.getElementById('rotation-hint');
+            if (activeTool === 'wall' || activeTool === 'stairs' || activeTool === 'axe') {
+                rotHint.style.display = 'block';
+            } else {
+                rotHint.style.display = 'none';
+            }
         }
 
         function eatFood() {
             if (inventory.meat > 0 && (player.hunger < player.maxHunger || player.hp < player.maxHp)) {
-                initAudio();
-                inventory.meat--;
-                player.hunger = Math.min(player.maxHunger, player.hunger + 40);
-                player.hp = Math.min(player.maxHp, player.hp + 20);
-                playSound('eat');
-                checkTutorial('eat');
-                updateUI();
+                initAudio(); inventory.meat--; player.hunger = Math.min(player.maxHunger, player.hunger + 40);
+                player.hp = Math.min(player.maxHp, player.hp + 20); playSound('eat'); checkTutorial('eat'); updateUI();
             }
         }
 
         function startRebind(action) {
             initAudio(); playSound('ui');
-            if (isRebinding) {
-                document.getElementById(`bind-${isRebinding}`).classList.remove('listening');
-                document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase();
-            }
-            isRebinding = action;
-            const btn = document.getElementById(`bind-${action}`);
-            btn.classList.add('listening');
-            btn.innerText = '...';
+            if (isRebinding) { document.getElementById(`bind-${isRebinding}`).classList.remove('listening'); document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase(); }
+            isRebinding = action; const btn = document.getElementById(`bind-${action}`); btn.classList.add('listening'); btn.innerText = '...';
         }
 
         function toggleMenu(menuName) {
-            initAudio(); playSound('ui');
-            const overlay = document.getElementById('menu-overlay');
-            
-            Object.keys(menus).forEach(k => {
-                if(k !== menuName && menus[k]) {
-                    menus[k] = false;
-                    document.getElementById(`${k}-menu`).style.display = 'none';
-                }
-            });
-            
-            menus[menuName] = !menus[menuName];
-            document.getElementById(`${menuName}-menu`).style.display = menus[menuName] ? 'block' : 'none';
+            initAudio(); playSound('ui'); const overlay = document.getElementById('menu-overlay');
+            Object.keys(menus).forEach(k => { if(k !== menuName && menus[k]) { menus[k] = false; document.getElementById(`${k}-menu`).style.display = 'none'; } });
+            menus[menuName] = !menus[menuName]; document.getElementById(`${menuName}-menu`).style.display = menus[menuName] ? 'block' : 'none';
             overlay.style.display = Object.values(menus).some(v => v) ? 'block' : 'none';
-
-            if (!menus.settings && isRebinding) {
-                document.getElementById(`bind-${isRebinding}`).classList.remove('listening');
-                document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase();
-                isRebinding = null;
-            }
+            if (!menus.settings && isRebinding) { document.getElementById(`bind-${isRebinding}`).classList.remove('listening'); document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase(); isRebinding = null; }
             updateUI(); 
         }
 
         function closeAllMenus() {
             initAudio(); playSound('ui');
-            Object.keys(menus).forEach(k => {
-                menus[k] = false;
-                document.getElementById(`${k}-menu`).style.display = 'none';
-            });
+            Object.keys(menus).forEach(k => { menus[k] = false; document.getElementById(`${k}-menu`).style.display = 'none'; });
             document.getElementById('menu-overlay').style.display = 'none';
-            
-            if (isRebinding) {
-                document.getElementById(`bind-${isRebinding}`).classList.remove('listening');
-                document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase();
-                isRebinding = null;
-            }
+            if (isRebinding) { document.getElementById(`bind-${isRebinding}`).classList.remove('listening'); document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase(); isRebinding = null; }
         }
 
         function craft(item, woodCost, scrapCost, yieldAmount = 1, clothCost = 0) {
             initAudio(); playSound('ui');
             if (inventory.wood >= woodCost && inventory.scrap >= scrapCost && inventory.cloth >= clothCost) {
-                inventory.wood -= woodCost; 
-                inventory.scrap -= scrapCost;
-                inventory.cloth -= clothCost;
-                
-                if (item === 'platform') {
-                    inventory.platforms += yieldAmount;
-                    checkTutorial('craftPlatform');
-                }
-                if (item === 'table') {
-                    inventory.tables += yieldAmount;
-                }
-                if (item === 'arrows') {
-                    inventory.arrows += yieldAmount;
-                    checkBowAndArrow();
-                }
-                if (item === 'sail') {
-                    inventory.sails += yieldAmount;
-                    hasCraftedSail = true;
-                }
-                if (item === 'torch') {
-                    inventory.torches += yieldAmount;
-                    checkTutorial('craftTorch');
-                }
-
+                inventory.wood -= woodCost; inventory.scrap -= scrapCost; inventory.cloth -= clothCost;
+                if (item === 'platform') { inventory.platforms += yieldAmount; checkTutorial('craftPlatform'); }
+                if (item === 'wall') { inventory.walls += yieldAmount; }
+                if (item === 'stairs') { inventory.stairs += yieldAmount; }
+                if (item === 'table') { inventory.tables += yieldAmount; }
+                if (item === 'arrows') { inventory.arrows += yieldAmount; checkBowAndArrow(); }
+                if (item === 'sail') { inventory.sails += yieldAmount; hasCraftedSail = true; }
+                if (item === 'torch') { inventory.torches += yieldAmount; checkTutorial('craftTorch'); }
                 updateUI();
             }
         }
@@ -1292,7 +1130,6 @@
             if (!unlockedTools[tool] && inventory.wood >= woodCost && inventory.scrap >= scrapCost) {
                 inventory.wood -= woodCost; inventory.scrap -= scrapCost; unlockedTools[tool] = true;
                 document.getElementById(`btn-craft-${tool}`).innerText = "Acquis"; document.getElementById(`btn-craft-${tool}`).disabled = true;
-                
                 if (tool === 'bow') checkBowAndArrow();
                 updateUI();
             }
@@ -1305,6 +1142,8 @@
             
             if (activeTool === tool) {
                 if (tool === 'platform') craft('platform', 2, 1, 1, 0);
+                else if (tool === 'wall') craft('wall', 3, 0);
+                else if (tool === 'stairs') craft('stairs', 4, 1);
                 else if (tool === 'table') craft('table', 5, 3, 1, 0);
                 else if (tool === 'bow') craft('arrows', 1, 1, 3, 0);
                 else if (tool === 'sail') craft('sail', 6, 4, 1, 5);
@@ -1314,80 +1153,73 @@
 
             activeTool = tool; hook.state = 'IDLE'; hook.charge = 0; 
             document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-            let slotIds = { 'hook': 1, 'platform': 2, 'table': 3, 'axe': 4, 'spear': 5, 'bow': 6, 'sail': 7, 'torch': 8 };
+            let slotIds = { 'hook': 1, 'platform': 2, 'table': 3, 'axe': 4, 'spear': 5, 'bow': 6, 'sail': 7, 'torch': 8, 'wall': 9, 'stairs': 0 };
             document.getElementById(`slot-${slotIds[tool]}`).classList.add('active');
+            updateUI();
         }
 
-        function worldToScreen(x, y) {
-            const dx = x - camera.x;
-            const dy = y - camera.y;
-            const isoX = dx - dy;
-            const isoY = (dx + dy) / 2;
+        function worldToScreen(x, y, zOffset = 0) {
+            const dx = x - camera.x; const dy = y - camera.y; const isoX = dx - dy; const isoY = ((dx + dy) / 2) - zOffset;
             return { x: canvas.width / 2 + isoX, y: canvas.height / 2 + isoY };
         }
 
         function getBuildableTiles() {
-            let buildable = new Set();
-            raftTiles.forEach((data, tileStr) => {
-                let [gx, gy] = tileStr.split(',').map(Number);
-                let neighbors = [`${gx+1},${gy}`, `${gx-1},${gy}`, `${gx},${gy+1}`, `${gx},${gy-1}`];
-                neighbors.forEach(n => { if (!raftTiles.has(n)) buildable.add(n); });
+            let buildables = [];
+            raftTiles.forEach((data, key) => {
+                let [gx, gy] = key.split(',').map(Number);
+                let neighbors = [[gx+1, gy], [gx-1, gy], [gx, gy+1], [gx, gy-1]];
+                for (let [nx, ny] of neighbors) {
+                    if (!raftTiles.has(`${nx},${ny}`)) {
+                        if (!buildables.some(b => b.x === nx && b.y === ny && b.level === 0)) buildables.push({x: nx, y: ny, level: 0});
+                    }
+                }
+                
+                let hasStairs0 = data.floor0 && data.floor0.stairsDir > -1;
+                let hasWall0 = data.floor0 && data.floor0.walls.some(w => w);
+                
+                if ((hasStairs0 || hasWall0) && !data.floor1) {
+                    if (!buildables.some(b => b.x === gx && b.y === gy && b.level === 1)) buildables.push({x: gx, y: gy, level: 1});
+                }
+                if (data.floor1) {
+                    for (let [nx, ny] of neighbors) {
+                        let t = raftTiles.get(`${nx},${ny}`);
+                        if (t && t.floor0 && !t.floor1) {
+                            if (!buildables.some(b => b.x === nx && b.y === ny && b.level === 1)) buildables.push({x: nx, y: ny, level: 1});
+                        }
+                    }
+                }
             });
-            return Array.from(buildable).map(t => { let [gx, gy] = t.split(',').map(Number); return {x: gx, y: gy}; });
-        }
-
-        function getPeripheralTiles() {
-            let peripherals = [];
-            raftTiles.forEach((data, tileStr) => {
-                let [gx, gy] = tileStr.split(',').map(Number);
-                let neighbors = [`${gx+1},${gy}`, `${gx-1},${gy}`, `${gx},${gy+1}`, `${gx},${gy-1}`];
-                if (neighbors.some(n => !raftTiles.has(n))) peripherals.push({x: gx, y: gy, key: tileStr});
-            });
-            return peripherals;
+            return buildables;
         }
 
         function getHoveredExistingTile() {
             let minDist = Infinity; let hovered = null;
             for (let [key, data] of raftTiles.entries()) {
                 let [gx, gy] = key.split(',').map(Number);
-                const screenC = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2);
-                const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
-                if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hovered = {x: gx, y: gy, key: key, data: data}; }
+                let h0 = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2, 0);
+                let d0 = Math.hypot(mouse.x - h0.x, mouse.y - h0.y);
+                if (d0 < TILE_SIZE * 0.8 && d0 < minDist && data.floor0) { minDist = d0; hovered = {x: gx, y: gy, key: key, data: data, targetLevel: 0}; }
+                
+                let h1 = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2, Z_HEIGHT);
+                let d1 = Math.hypot(mouse.x - h1.x, mouse.y - h1.y);
+                if (d1 < TILE_SIZE * 0.8 && d1 < minDist && data.floor1) { minDist = d1; hovered = {x: gx, y: gy, key: key, data: data, targetLevel: 1}; }
             }
             return hovered;
         }
 
         function spawnEdgePos() {
-            if (Math.random() > 0.5) {
-                return { x: Math.random() * (canvas.width + 800) - 400, y: -400 };
-            } else {
-                return { x: canvas.width + 400, y: Math.random() * (canvas.height + 800) - 400 };
-            }
+            if (Math.random() > 0.5) return { x: Math.random() * (canvas.width + 800) - 400, y: -400 };
+            else return { x: canvas.width + 400, y: Math.random() * (canvas.height + 800) - 400 };
         }
 
         function createCloud(startX, startY) {
-            let parts = [];
-            let numParts = 3 + Math.floor(Math.random() * 4);
-            for(let i=0; i<numParts; i++){
-                parts.push({
-                    ox: (Math.random() - 0.5) * 80,
-                    oy: (Math.random() - 0.5) * 40,
-                    r: 20 + Math.random() * 50
-                });
-            }
+            let parts = []; let numParts = 3 + Math.floor(Math.random() * 4);
+            for(let i=0; i<numParts; i++){ parts.push({ ox: (Math.random() - 0.5) * 80, oy: (Math.random() - 0.5) * 40, r: 20 + Math.random() * 50 }); }
             return { x: startX, y: startY, parts: parts, speedOffset: Math.random() * 0.5 };
         }
 
         function createWind(startX, startY) {
-            return {
-                x: startX, y: startY,
-                length: 50 + Math.random() * 150,
-                baseSpeed: 1.5 + Math.random() * 1.5,
-                type: Math.random() > 0.7 ? 'swirl' : 'line',
-                life: 0,
-                maxLife: 150 + Math.random() * 100,
-                size: 15 + Math.random() * 20
-            };
+            return { x: startX, y: startY, length: 50 + Math.random() * 150, baseSpeed: 1.5 + Math.random() * 1.5, type: Math.random() > 0.7 ? 'swirl' : 'line', life: 0, maxLife: 150 + Math.random() * 100, size: 15 + Math.random() * 20 };
         }
 
         function executeAction() {
@@ -1397,256 +1229,206 @@
             if (activeTool === 'platform') {
                 let minDist = Infinity;
                 for (let b of getBuildableTiles()) {
-                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2);
+                    let zOff = b.level === 1 ? Z_HEIGHT : 0;
+                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2, zOff);
                     const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
                     if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hoveredBuildTile = b; }
                 }
-            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook' || activeTool === 'sail' || activeTool === 'torch') {
+            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook' || activeTool === 'sail' || activeTool === 'torch' || activeTool === 'wall' || activeTool === 'stairs') {
                 hoveredExistingTile = getHoveredExistingTile();
             }
 
-            if (hoveredExistingTile && hoveredExistingTile.data.hasTable && activeTool !== 'torch') {
-                const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
-                if (Math.abs(pTileX - hoveredExistingTile.x) <= 1 && Math.abs(pTileY - hoveredExistingTile.y) <= 1) { toggleMenu('advanced'); return; }
+            if (hoveredExistingTile) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                if (floor && floor.hasTable && activeTool !== 'torch') {
+                    const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
+                    if (Math.abs(pTileX - hoveredExistingTile.x) <= 1 && Math.abs(pTileY - hoveredExistingTile.y) <= 1) { toggleMenu('advanced'); return; }
+                }
             }
 
             if (activeTool === 'hook' && hook.state === 'CHARGING') fireHook();
             else if (activeTool === 'platform' && hoveredBuildTile && inventory.platforms > 0) {
                 playSound('build');
-                inventory.platforms--; raftTiles.set(`${hoveredBuildTile.x},${hoveredBuildTile.y}`, { hasTable: false, hasSail: false, hasTorch: false }); 
+                inventory.platforms--; 
+                if (hoveredBuildTile.level === 0) {
+                    raftTiles.set(`${hoveredBuildTile.x},${hoveredBuildTile.y}`, { floor0: { hasTable: false, hasSail: false, hasTorch: false, walls: [false,false,false,false], stairsDir: -1 }, floor1: null }); 
+                } else {
+                    let tile = raftTiles.get(`${hoveredBuildTile.x},${hoveredBuildTile.y}`);
+                    if (tile) tile.floor1 = { hasTable: false, hasSail: false, hasTorch: false, walls: [false,false,false,false], stairsDir: -1 };
+                }
                 checkTutorial('placePlatform'); 
                 updateUI();
             }
-            else if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail && inventory.tables > 0) {
-                playSound('build');
-                inventory.tables--; hoveredExistingTile.data.hasTable = true; 
-                checkTutorial('placeTable');
-                if (!hasCraftedTable) {
-                    hasCraftedTable = true; 
-                    manta.cooldown = 3600; 
+            else if (activeTool === 'wall' && hoveredExistingTile && inventory.walls > 0) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                if (!floor.walls[buildRotation] && floor.stairsDir === -1) {
+                    playSound('build');
+                    inventory.walls--; floor.walls[buildRotation] = true; updateUI();
                 }
-                updateUI();
             }
-            else if (activeTool === 'sail' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail && inventory.sails > 0) {
-                playSound('build');
-                inventory.sails--; hoveredExistingTile.data.hasSail = true; 
-                checkTutorial('sail');
-                updateUI();
+            else if (activeTool === 'stairs' && hoveredExistingTile && hoveredExistingTile.targetLevel === 0 && inventory.stairs > 0) {
+                let floor = hoveredExistingTile.data.floor0;
+                if (floor.stairsDir === -1) {
+                    playSound('build');
+                    inventory.stairs--; floor.stairsDir = buildRotation; updateUI();
+                }
             }
-            else if (activeTool === 'torch' && hoveredExistingTile && !hoveredExistingTile.data.hasTorch && inventory.torches > 0) {
-                playSound('build');
-                inventory.torches--; hoveredExistingTile.data.hasTorch = true; updateUI();
+            else if (activeTool === 'table' && hoveredExistingTile && inventory.tables > 0) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                if (!floor.hasTable && !floor.hasSail) {
+                    playSound('build');
+                    inventory.tables--; floor.hasTable = true; 
+                    checkTutorial('placeTable');
+                    if (!hasCraftedTable) { hasCraftedTable = true; manta.cooldown = 3600; }
+                    updateUI();
+                }
+            }
+            else if (activeTool === 'sail' && hoveredExistingTile && inventory.sails > 0) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                if (!floor.hasTable && !floor.hasSail) {
+                    playSound('build');
+                    inventory.sails--; floor.hasSail = true; 
+                    checkTutorial('sail'); updateUI();
+                }
+            }
+            else if (activeTool === 'torch' && hoveredExistingTile && inventory.torches > 0) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                if (!floor.hasTorch) {
+                    playSound('build');
+                    inventory.torches--; floor.hasTorch = true; updateUI();
+                }
             }
             else if (activeTool === 'axe' && hoveredExistingTile) {
                 playSound('hit');
-                const pTileX = Math.floor(player.x / TILE_SIZE), pTileY = Math.floor(player.y / TILE_SIZE);
-                if (!(pTileX === hoveredExistingTile.x && pTileY === hoveredExistingTile.y) && raftTiles.size > 1) {
-                    raftTiles.delete(hoveredExistingTile.key);
-                    checkRaftIntegrity(); 
+                let tile = hoveredExistingTile.data;
+                let floor = hoveredExistingTile.targetLevel === 1 ? tile.floor1 : tile.floor0;
+                
+                if (floor.walls[buildRotation]) { floor.walls[buildRotation] = false; }
+                else if (floor.stairsDir === buildRotation || floor.stairsDir > -1) { floor.stairsDir = -1; }
+                else if (floor.hasTable) { floor.hasTable = false; }
+                else if (floor.hasTorch) { floor.hasTorch = false; }
+                else if (floor.hasSail) { floor.hasSail = false; }
+                else {
+                    if (hoveredExistingTile.targetLevel === 1) { tile.floor1 = null; } 
+                    else if (raftTiles.size > 1) { raftTiles.delete(hoveredExistingTile.key); checkRaftIntegrity(); }
                 }
             }
             else if (activeTool === 'spear') {
-                playSound('spear');
-                player.currentAction = 'spear'; player.actionTimer = 15; 
-                let pScreen = worldToScreen(player.x, player.y);
+                playSound('spear'); player.currentAction = 'spear'; player.actionTimer = 15; 
+                let pScreen = worldToScreen(player.x, player.y, player.visualZ);
                 
                 if (manta.state === 'ATTACHED' || manta.state === 'APPROACHING') {
-                    const mScreen = worldToScreen(manta.x, manta.y);
+                    const mScreen = worldToScreen(manta.x, manta.y, 0);
                     if (Math.hypot(pScreen.x - mScreen.x, pScreen.y - mScreen.y) < 100) { playSound('hit'); manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; }
                 }
                 
-                // NOUVEAU: Collision avec l'oiseau géant
                 if (giantBird.active && (giantBird.state === 'DIVING' || giantBird.state === 'ASCENDING' || giantBird.state === 'CIRCLING')) {
-                    const bScreen = worldToScreen(giantBird.x, giantBird.y);
-                    bScreen.y -= giantBird.z; 
+                    const bScreen = worldToScreen(giantBird.x, giantBird.y, giantBird.z);
                     if (Math.hypot(pScreen.x - bScreen.x, pScreen.y - bScreen.y) < 80) {
-                        playSound('hit');
-                        giantBird.hp--;
+                        playSound('hit'); giantBird.hp--;
                         if (giantBird.hp <= 0) {
-                            giantBird.active = false;
-                            giantBird.state = 'WAITING';
-                            giantBird.spawnTimer = 18000; 
+                            giantBird.active = false; giantBird.state = 'WAITING'; giantBird.spawnTimer = 18000; 
                             for (let m = 0; m < 4; m++) {
-                                debrisList.push({ 
-                                    x: giantBird.x + (Math.random() * 80 - 40), 
-                                    y: giantBird.y + (Math.random() * 80 - 40), 
-                                    type: 'meat', isHooked: false, rot: Math.random() 
-                                });
+                                debrisList.push({ x: giantBird.x + (Math.random() * 80 - 40), y: giantBird.y + (Math.random() * 80 - 40), type: 'meat', isHooked: false, rot: Math.random() });
                             }
                         }
                     }
                 }
-
                 for (let j = birds.length - 1; j >= 0; j--) {
                     let b = birds[j];
                     if (Math.hypot(pScreen.x - b.x, pScreen.y - b.y) < 60) {
-                        playSound('hit');
-                        inventory.meat++;
-                        checkTutorial('food'); 
-                        updateUI();
-                        birds.splice(j, 1);
+                        playSound('hit'); inventory.meat++; checkTutorial('food'); updateUI(); birds.splice(j, 1);
                     }
                 }
             }
             else if (activeTool === 'bow' && inventory.arrows > 0) {
-                playSound('bow');
-                inventory.arrows--; updateUI();
-                const pScreen = worldToScreen(player.x, player.y), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
+                playSound('bow'); inventory.arrows--; updateUI();
+                const pScreen = worldToScreen(player.x, player.y, player.visualZ), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
                 projectiles.push({ x: pScreen.x, y: pScreen.y - 20, vx: Math.cos(angle) * 15, vy: Math.sin(angle) * 15, life: 60 });
             }
         }
 
         window.addEventListener('keydown', (e) => {
             if (gameState !== 'PLAYING') return; 
-            initAudio();
-            const keyLower = e.key.toLowerCase();
+            initAudio(); const keyLower = e.key.toLowerCase();
             
             if (isRebinding) {
                 e.preventDefault();
-                if (keyLower !== 'escape') {
-                    keyBinds[isRebinding] = keyLower;
-                    const btn = document.getElementById(`bind-${isRebinding}`);
-                    btn.classList.remove('listening');
-                    btn.innerText = keyLower === ' ' ? 'ESPACE' : keyLower.toUpperCase();
-                    isRebinding = null;
-                    updateUI(); 
-                }
+                if (keyLower !== 'escape') { keyBinds[isRebinding] = keyLower; document.getElementById(`bind-${isRebinding}`).classList.remove('listening'); document.getElementById(`bind-${isRebinding}`).innerText = keyLower === ' ' ? 'ESPACE' : keyLower.toUpperCase(); isRebinding = null; updateUI(); }
                 return;
             }
 
             keys[keyLower] = true; keys[e.key] = true; 
-
-            if (keyLower === 'escape') {
-                if (Object.values(menus).some(v => v)) closeAllMenus(); 
-                else toggleMenu('settings');
+            
+            if (keyLower === 'r') {
+                buildRotation = (buildRotation + 1) % 4;
+                playSound('ui');
+                return;
             }
+
+            if (keyLower === 'escape') { if (Object.values(menus).some(v => v)) closeAllMenus(); else toggleMenu('settings'); }
             if (keyLower === keyBinds.mute && !e.repeat && !menus.settings) toggleMute();
-            if (keyLower === keyBinds.build && !e.repeat && !menus.settings) {
-                if (menus.advanced) closeAllMenus(); else toggleMenu('basic');
-            }
+            if (keyLower === keyBinds.build && !e.repeat && !menus.settings) { if (menus.advanced) closeAllMenus(); else toggleMenu('basic'); }
 
-            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow', 'sail', 'torch'];
-            const azertyKeys = ['&', 'é', '"', "'", '(', '-', 'è', '_'];
-            if (keyLower >= '1' && keyLower <= '8') setActiveTool(toolsList[parseInt(keyLower) - 1]);
+            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow', 'sail', 'torch', 'wall', 'stairs'];
+            const azertyKeys = ['&', 'é', '"', "'", '(', '-', 'è', '_', 'ç', 'à'];
+            if (keyLower >= '1' && keyLower <= '9') setActiveTool(toolsList[parseInt(keyLower) - 1]);
+            else if (keyLower === '0') setActiveTool('stairs');
             else if (azertyKeys.includes(keyLower)) setActiveTool(toolsList[azertyKeys.indexOf(keyLower)]);
         });
 
-        window.addEventListener('keyup', (e) => {
-            const keyLower = e.key.toLowerCase();
-            keys[keyLower] = false; keys[e.key] = false;
-        });
-
-        window.addEventListener('blur', () => {
-            for (let k in keys) keys[k] = false;
-            mouse.isDown = false;
-        });
-
+        window.addEventListener('keyup', (e) => { const keyLower = e.key.toLowerCase(); keys[keyLower] = false; keys[e.key] = false; });
+        window.addEventListener('blur', () => { for (let k in keys) keys[k] = false; mouse.isDown = false; });
         canvas.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        
-        canvas.addEventListener('mousedown', (e) => { 
-            if (gameState !== 'PLAYING') return;
-            initAudio(); 
-            if (!Object.values(menus).some(v => v) && e.button === 0) mouse.isDown = true; 
-        });
-
-        canvas.addEventListener('mouseup', (e) => {
-            if (gameState !== 'PLAYING' || Object.values(menus).some(v => v) || e.button !== 0) return;
-            mouse.isDown = false;
-            executeAction();
-        });
+        canvas.addEventListener('mousedown', (e) => { if (gameState !== 'PLAYING') return; initAudio(); if (!Object.values(menus).some(v => v) && e.button === 0) mouse.isDown = true; });
+        canvas.addEventListener('mouseup', (e) => { if (gameState !== 'PLAYING' || Object.values(menus).some(v => v) || e.button !== 0) return; mouse.isDown = false; executeAction(); });
 
         window.addEventListener('wheel', (e) => {
             if (gameState !== 'PLAYING' || Object.values(menus).some(v => v)) return;
-
-            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow', 'sail', 'torch'];
+            const toolsList = ['hook', 'platform', 'table', 'axe', 'spear', 'bow', 'sail', 'torch', 'wall', 'stairs'];
             let currentIndex = toolsList.indexOf(activeTool);
-            
             let dir = e.deltaY > 0 ? 1 : -1;
-
             for (let i = 0; i < toolsList.length; i++) {
                 currentIndex = (currentIndex + dir + toolsList.length) % toolsList.length;
                 let nextTool = toolsList[currentIndex];
-                
-                if (nextTool === 'hook' || nextTool === 'platform' || nextTool === 'table' || nextTool === 'torch' || (nextTool === 'sail' && hasCraftedSail) || unlockedTools[nextTool]) {
-                    setActiveTool(nextTool);
-                    break;
-                }
+                if (nextTool === 'hook' || nextTool === 'platform' || nextTool === 'table' || nextTool === 'torch' || nextTool === 'wall' || nextTool === 'stairs' || (nextTool === 'sail' && hasCraftedSail) || unlockedTools[nextTool]) { setActiveTool(nextTool); break; }
             }
         });
 
         canvas.addEventListener('touchstart', (e) => {
-            if (gameState !== 'PLAYING') return;
-            e.preventDefault(); 
-            initAudio();
-
+            if (gameState !== 'PLAYING') return; e.preventDefault(); initAudio();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let touch = e.changedTouches[i];
-                if (touch.clientX < canvas.width / 2 && !vJoystick.active) {
-                    vJoystick.active = true;
-                    vJoystick.id = touch.identifier;
-                    vJoystick.baseX = touch.clientX;
-                    vJoystick.baseY = touch.clientY;
-                    vJoystick.knobX = touch.clientX;
-                    vJoystick.knobY = touch.clientY;
-                } 
-                else if (!actionTouchId && !Object.values(menus).some(v => v)) {
-                    actionTouchId = touch.identifier;
-                    mouse.x = touch.clientX;
-                    mouse.y = touch.clientY;
-                    mouse.isDown = true;
-                }
+                if (touch.clientX < canvas.width / 2 && !vJoystick.active) { vJoystick.active = true; vJoystick.id = touch.identifier; vJoystick.baseX = touch.clientX; vJoystick.baseY = touch.clientY; vJoystick.knobX = touch.clientX; vJoystick.knobY = touch.clientY; } 
+                else if (!actionTouchId && !Object.values(menus).some(v => v)) { actionTouchId = touch.identifier; mouse.x = touch.clientX; mouse.y = touch.clientY; mouse.isDown = true; }
             }
         }, { passive: false });
 
         canvas.addEventListener('touchmove', (e) => {
-            if (gameState !== 'PLAYING') return;
-            e.preventDefault();
-
+            if (gameState !== 'PLAYING') return; e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let touch = e.changedTouches[i];
                 if (vJoystick.active && touch.identifier === vJoystick.id) {
-                    let dx = touch.clientX - vJoystick.baseX;
-                    let dy = touch.clientY - vJoystick.baseY;
-                    let dist = Math.hypot(dx, dy);
-                    if (dist > vJoystick.maxDist) {
-                        dx = (dx / dist) * vJoystick.maxDist;
-                        dy = (dy / dist) * vJoystick.maxDist;
-                    }
-                    vJoystick.knobX = vJoystick.baseX + dx;
-                    vJoystick.knobY = vJoystick.baseY + dy;
-                    vJoystick.dirX = dx / vJoystick.maxDist;
-                    vJoystick.dirY = dy / vJoystick.maxDist;
-                } else if (touch.identifier === actionTouchId) {
-                    mouse.x = touch.clientX;
-                    mouse.y = touch.clientY;
-                }
+                    let dx = touch.clientX - vJoystick.baseX; let dy = touch.clientY - vJoystick.baseY; let dist = Math.hypot(dx, dy);
+                    if (dist > vJoystick.maxDist) { dx = (dx / dist) * vJoystick.maxDist; dy = (dy / dist) * vJoystick.maxDist; }
+                    vJoystick.knobX = vJoystick.baseX + dx; vJoystick.knobY = vJoystick.baseY + dy; vJoystick.dirX = dx / vJoystick.maxDist; vJoystick.dirY = dy / vJoystick.maxDist;
+                } else if (touch.identifier === actionTouchId) { mouse.x = touch.clientX; mouse.y = touch.clientY; }
             }
         }, { passive: false });
 
         function handleTouchEnd(e) {
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let touch = e.changedTouches[i];
-                if (vJoystick.active && touch.identifier === vJoystick.id) {
-                    vJoystick.active = false;
-                    vJoystick.id = null;
-                    vJoystick.dirX = 0;
-                    vJoystick.dirY = 0;
-                } else if (touch.identifier === actionTouchId) {
-                    actionTouchId = null;
-                    mouse.isDown = false;
-                    executeAction();
-                }
+                if (vJoystick.active && touch.identifier === vJoystick.id) { vJoystick.active = false; vJoystick.id = null; vJoystick.dirX = 0; vJoystick.dirY = 0; } 
+                else if (touch.identifier === actionTouchId) { actionTouchId = null; mouse.isDown = false; executeAction(); }
             }
         }
-
-        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-        canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false }); canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
 
         function fireHook() {
-            playSound('throw');
-            hook.state = 'THROWN';
-            const pScreen = worldToScreen(player.x, player.y), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
+            playSound('throw'); hook.state = 'THROWN';
+            const pScreen = worldToScreen(player.x, player.y, player.visualZ), angle = Math.atan2(mouse.y - pScreen.y, mouse.x - pScreen.x);
             const dist = Math.max(50, hook.charge);
             hook.targetX = pScreen.x + Math.cos(angle) * dist; hook.targetY = pScreen.y + Math.sin(angle) * dist;
             hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = 0;
@@ -1655,21 +1437,63 @@
         for(let i=0; i<20; i++) clouds.push(createCloud(Math.random() * 2000 - 500, Math.random() * 2000 - 500));
         for(let i=0; i<15; i++) windLines.push(createWind(Math.random() * 2000 - 500, Math.random() * 2000 - 500));
 
+        // --- SYSTÈME DE COLLISION A ÉTAGES ---
+        function canBeAt(x, y, level) {
+            let gx = Math.floor(x / TILE_SIZE); let gy = Math.floor(y / TILE_SIZE);
+            let t = raftTiles.get(`${gx},${gy}`);
+            if (!t) return false;
+            
+            let isStairs = t.floor0 && t.floor0.stairsDir > -1;
+            
+            if (level >= 1 && !t.floor1 && !isStairs) return false;
+            if (level < 1 && !t.floor0) return false;
+
+            let f = level >= 1 ? t.floor1 : t.floor0;
+            let walls = f ? [...f.walls] : [false, false, false, false];
+
+            if (isStairs) {
+                let sd = t.floor0.stairsDir;
+                if (level < 1) { 
+                    if (sd === 0) { walls[0] = true; walls[1] = true; walls[3] = true; } 
+                    if (sd === 1) { walls[0] = true; walls[1] = true; walls[2] = true; } 
+                    if (sd === 2) { walls[1] = true; walls[2] = true; walls[3] = true; } 
+                    if (sd === 3) { walls[0] = true; walls[2] = true; walls[3] = true; } 
+                } else { 
+                    if (sd === 0) { walls[1] = true; walls[2] = true; walls[3] = true; } 
+                    if (sd === 1) { walls[0] = true; walls[2] = true; walls[3] = true; } 
+                    if (sd === 2) { walls[0] = true; walls[1] = true; walls[3] = true; } 
+                    if (sd === 3) { walls[0] = true; walls[1] = true; walls[2] = true; } 
+                }
+            }
+
+            let rx = x - gx * TILE_SIZE; let ry = y - gy * TILE_SIZE;
+            const m = 6;
+            if (walls[0] && ry < m) return false;
+            if (walls[1] && rx > TILE_SIZE - m) return false;
+            if (walls[2] && ry > TILE_SIZE - m) return false;
+            if (walls[3] && rx < m) return false;
+            
+            let nN = raftTiles.get(`${gx},${gy-1}`); if (nN && ry < m) { let fn = level >= 1 ? nN.floor1 : nN.floor0; if (fn && fn.walls[2]) return false; }
+            let nS = raftTiles.get(`${gx},${gy+1}`); if (nS && ry > TILE_SIZE - m) { let fn = level >= 1 ? nS.floor1 : nS.floor0; if (fn && fn.walls[0]) return false; }
+            let nW = raftTiles.get(`${gx-1},${gy}`); if (nW && rx < m) { let fn = level >= 1 ? nW.floor1 : nW.floor0; if (fn && fn.walls[1]) return false; }
+            let nE = raftTiles.get(`${gx+1},${gy}`); if (nE && rx > TILE_SIZE - m) { let fn = level >= 1 ? nE.floor1 : nE.floor0; if (fn && fn.walls[3]) return false; }
+            
+            return true;
+        }
+
         function update() {
 
             if (gameState === 'PLAYING' && !Object.values(menus).some(v => v)) {
                 timeOfDay += TIME_SPEED;
-                if (timeOfDay >= 24) {
-                    timeOfDay -= 24;
-                    dayCount++;
-                }
+                if (timeOfDay >= 24) { timeOfDay -= 24; dayCount++; }
             }
 
-            let sailCount = 0;
-            let tableCount = 0;
+            let sailCount = 0; let tableCount = 0;
             raftTiles.forEach(t => { 
-                if(t.hasSail) sailCount++; 
-                if(t.hasTable) tableCount++; 
+                if (t.floor0 && t.floor0.hasSail) sailCount++; 
+                if (t.floor1 && t.floor1.hasSail) sailCount++;
+                if (t.floor0 && t.floor0.hasTable) tableCount++; 
+                if (t.floor1 && t.floor1.hasTable) tableCount++;
             });
             hasCraftedTable = (tableCount > 0);
 
@@ -1680,90 +1504,42 @@
                 let c = clouds[i]; c.x -= (currentWorldSpeed + c.speedOffset); c.y += (currentWorldSpeed + c.speedOffset) * 0.5;
                 if (c.x < -400 || c.y > canvas.height + 400) clouds.splice(i, 1);
             }
-            if (Math.random() < 0.04) {
-                let p = spawnEdgePos();
-                clouds.push(createCloud(p.x, p.y));
-            }
+            if (Math.random() < 0.04) { let p = spawnEdgePos(); clouds.push(createCloud(p.x, p.y)); }
 
             for (let i = windLines.length - 1; i >= 0; i--) {
                 let w = windLines[i]; w.x -= w.baseSpeed * currentWorldSpeed; w.y += w.baseSpeed * currentWorldSpeed * 0.5; w.life++;
                 if (w.x < -400 || w.y > canvas.height + 400 || w.life > w.maxLife) windLines.splice(i, 1);
             }
-            if (Math.random() < 0.15) {
-                let p = spawnEdgePos();
-                windLines.push(createWind(p.x, p.y));
-            }
+            if (Math.random() < 0.15) { let p = spawnEdgePos(); windLines.push(createWind(p.x, p.y)); }
 
             if (gameState === 'START' || Object.values(menus).some(v => v)) return; 
 
-            // NOUVEAU : Logique du Grand Oiseau
             if (dayCount >= 2) {
                 if (!giantBird.active && giantBird.state === 'WAITING') {
                     giantBird.spawnTimer--;
                     if (giantBird.spawnTimer <= 0) {
-                        giantBird.active = true;
-                        giantBird.state = 'CIRCLING';
-                        giantBird.hp = giantBird.maxHp;
-                        giantBird.x = player.x + 800;
-                        giantBird.y = player.y + 800;
-                        giantBird.z = 400;
-                        giantBird.diveTimer = 1200; 
+                        giantBird.active = true; giantBird.state = 'CIRCLING'; giantBird.hp = giantBird.maxHp;
+                        giantBird.x = player.x + 800; giantBird.y = player.y + 800; giantBird.z = 400; giantBird.diveTimer = 1200; 
                         playSound('manta_warning'); 
                     }
                 } else if (giantBird.active) {
-                    
                     if (giantBird.state === 'CIRCLING') {
-                        giantBird.angle += 0.02;
-                        let targetX = player.x + Math.cos(giantBird.angle) * 300;
-                        let targetY = player.y + Math.sin(giantBird.angle) * 300;
-                        
-                        giantBird.x += (targetX - giantBird.x) * 0.02;
-                        giantBird.y += (targetY - giantBird.y) * 0.02;
-                        giantBird.z += (200 - giantBird.z) * 0.05;
-
+                        giantBird.angle += 0.02; let targetX = player.x + Math.cos(giantBird.angle) * 300; let targetY = player.y + Math.sin(giantBird.angle) * 300;
+                        giantBird.x += (targetX - giantBird.x) * 0.02; giantBird.y += (targetY - giantBird.y) * 0.02; giantBird.z += (200 - giantBird.z) * 0.05;
                         giantBird.diveTimer--;
-                        if (giantBird.diveTimer <= 0) {
-                            giantBird.state = 'DIVING';
-                            playSound('throw'); 
-                        }
+                        if (giantBird.diveTimer <= 0) { giantBird.state = 'DIVING'; playSound('throw'); }
                     } else if (giantBird.state === 'DIVING') {
-                        let dx = player.x - giantBird.x;
-                        let dy = player.y - giantBird.y;
-                        let dz = 10 - giantBird.z; 
-                        let dist = Math.hypot(dx, dy, dz);
-
-                        if (dist > 15) {
-                            giantBird.x += (dx / dist) * 12;
-                            giantBird.y += (dy / dist) * 12;
-                            giantBird.z += (dz / dist) * 12;
-                        }
-
-                        if (dist < 50 && giantBird.z < 40) {
-                            player.hp -= 10; 
-                            playSound('hit');
-                            giantBird.state = 'ASCENDING';
-                        } else if (giantBird.z <= 15 || dist < 20) {
-                            giantBird.state = 'ASCENDING';
-                        }
+                        let dx = player.x - giantBird.x; let dy = player.y - giantBird.y; let dz = player.visualZ - giantBird.z; let dist = Math.hypot(dx, dy, dz);
+                        if (dist > 15) { giantBird.x += (dx / dist) * 12; giantBird.y += (dy / dist) * 12; giantBird.z += (dz / dist) * 12; }
+                        if (dist < 50 && giantBird.z < player.visualZ + 40) { player.hp -= 10; playSound('hit'); giantBird.state = 'ASCENDING'; } 
+                        else if (giantBird.z <= player.visualZ + 15 || dist < 20) { giantBird.state = 'ASCENDING'; }
                     } else if (giantBird.state === 'ASCENDING') {
-                        giantBird.z += 8;
-                        giantBird.x += Math.cos(giantBird.angle) * 8;
-                        giantBird.y += Math.sin(giantBird.angle) * 8;
-                        if (giantBird.z >= 200) {
-                            giantBird.state = 'CIRCLING';
-                            giantBird.diveTimer = 1200; 
-                        }
+                        giantBird.z += 8; giantBird.x += Math.cos(giantBird.angle) * 8; giantBird.y += Math.sin(giantBird.angle) * 8;
+                        if (giantBird.z >= 200) { giantBird.state = 'CIRCLING'; giantBird.diveTimer = 1200; }
                     }
-
                     if (giantBird.state === 'FLEEING') {
-                        giantBird.z += 5;
-                        giantBird.x += Math.cos(giantBird.angle) * 10;
-                        giantBird.y += Math.sin(giantBird.angle) * 10;
-                        if (giantBird.z > 1000) {
-                            giantBird.active = false;
-                            giantBird.state = 'WAITING';
-                            giantBird.spawnTimer = 7200; 
-                        }
+                        giantBird.z += 5; giantBird.x += Math.cos(giantBird.angle) * 10; giantBird.y += Math.sin(giantBird.angle) * 10;
+                        if (giantBird.z > 1000) { giantBird.active = false; giantBird.state = 'WAITING'; giantBird.spawnTimer = 7200; }
                     }
                 }
             }
@@ -1771,193 +1547,132 @@
             distanceTraveled += currentWorldSpeed * 0.02; 
             updateNavigationUI();
 
-            if (player.hunger > 0) {
-                // La faim descend plus vite si le premier oiseau a été chassé
-                player.hunger -= tutorialState.food ? 0.004 : 0.0022; 
-            } else {
-                player.hunger = 0;
-                player.hp -= 0.02; 
+            if (player.hunger > 0) { player.hunger -= tutorialState.food ? 0.004 : 0.0022; } 
+            else {
+                player.hunger = 0; player.hp -= 0.02; 
                 if (player.hp <= 0) {
-                    // NOUVEAU : Logique de mort complète (Sauvegarde et Reset)
                     checkAndSaveHighScore();
-                    
-                    player.hp = player.maxHp;
-                    player.hunger = player.maxHunger;
-                    inventory.meat = 0;
-                    distanceTraveled = 0; // Remise à zéro de la distance
-                    dayCount = 1;         // Remise à zéro des jours
-                    timeOfDay = 8;        // Retour au matin
-                    
+                    player.hp = player.maxHp; player.hunger = player.maxHunger; inventory.meat = 0; distanceTraveled = 0; dayCount = 1; timeOfDay = 8;        
                     let firstTile = Array.from(raftTiles.keys())[0].split(',').map(Number);
-                    player.x = firstTile[0] * TILE_SIZE + TILE_SIZE/2;
-                    player.y = firstTile[1] * TILE_SIZE + TILE_SIZE/2;
-                    
-                    giantBird.active = false;
-                    giantBird.state = 'WAITING';
-                    giantBird.spawnTimer = 7200;
-
+                    player.x = firstTile[0] * TILE_SIZE + TILE_SIZE/2; player.y = firstTile[1] * TILE_SIZE + TILE_SIZE/2; player.baseLevel = 0;
+                    giantBird.active = false; giantBird.state = 'WAITING'; giantBird.spawnTimer = 7200;
                     playSound('hit');
                 }
             }
             updateUI(); 
 
             for (let i = sinkingTiles.length - 1; i >= 0; i--) {
-                let st = sinkingTiles[i];
-                st.z += 1.5; 
-                st.opacity -= 0.02; 
+                let st = sinkingTiles[i]; st.z += 1.5; st.opacity -= 0.02; 
                 if (st.opacity <= 0) sinkingTiles.splice(i, 1);
             }
 
             if (player.actionTimer > 0) player.actionTimer--; else player.currentAction = 'none';
 
             let dx = 0, dy = 0;
-
-            if (vJoystick.active) {
-                dx = vJoystick.dirX * PLAYER_SPEED;
-                dy = vJoystick.dirY * PLAYER_SPEED;
-            } else {
+            if (vJoystick.active) { dx = vJoystick.dirX * PLAYER_SPEED; dy = vJoystick.dirY * PLAYER_SPEED; } 
+            else {
                 if (keys[keyBinds.up] || keys['arrowup']) dy -= PLAYER_SPEED;
                 if (keys[keyBinds.down] || keys['arrowdown']) dy += PLAYER_SPEED;
                 if (keys[keyBinds.left] || keys['arrowleft']) dx -= PLAYER_SPEED;
                 if (keys[keyBinds.right] || keys['arrowright']) dx += PLAYER_SPEED;
-
                 if (dx !== 0 && dy !== 0) { const len = Math.sqrt(dx * dx + dy * dy); dx = (dx / len) * PLAYER_SPEED; dy = (dy / len) * PLAYER_SPEED; }
             }
             
             player.isMoving = (dx !== 0 || dy !== 0);
-            if (player.isMoving) {
-                player.walkAnim++;
-                if (player.walkAnim % 15 === 0) playSound('footstep'); 
-            }
-            else {
-                player.walkAnim = 0;
-            }
+            if (player.isMoving) { player.walkAnim++; if (player.walkAnim % 15 === 0) playSound('footstep'); } else { player.walkAnim = 0; }
 
-            player.x += dx; player.y += dy;
+            let newX = player.x + dx;
+            let newY = player.y + dy;
 
-            const gridX = Math.floor(player.x / TILE_SIZE), gridY = Math.floor(player.y / TILE_SIZE);
-            if (!raftTiles.has(`${gridX},${gridY}`)) {
-                const tX = Math.floor((player.x - dx) / TILE_SIZE), tY = Math.floor((player.y - dy) / TILE_SIZE);
-                if (raftTiles.has(`${gridX},${tY}`)) { player.x -= dx; player.y -= dy; } 
-                else if (raftTiles.has(`${tX},${gridY}`)) player.x -= dx;
-                else if (raftTiles.has(`${gridX},${tY}`)) player.y -= dy;
-                else { player.x -= dx; player.y -= dy; }
-            }
+            if (canBeAt(newX, player.y, player.baseLevel)) player.x = newX;
+            if (canBeAt(player.x, newY, player.baseLevel)) player.y = newY;
 
-            const oldCamX = camera.x;
-            const oldCamY = camera.y;
+            let cGridX = Math.floor(player.x / TILE_SIZE);
+            let cGridY = Math.floor(player.y / TILE_SIZE);
+            let currentTile = raftTiles.get(`${cGridX},${cGridY}`);
+            let targetVisualZ = player.baseLevel * Z_HEIGHT;
 
-            let pScreen = worldToScreen(player.x, player.y);
-            
-            const marginX = canvas.width * 0.35; 
-            const marginY = canvas.height * 0.35;
-
-            let diffScreenX = 0;
-            let diffScreenY = 0;
-
-            if (pScreen.x < marginX) diffScreenX = pScreen.x - marginX;
-            else if (pScreen.x > canvas.width - marginX) diffScreenX = pScreen.x - (canvas.width - marginX);
-
-            if (pScreen.y < marginY) diffScreenY = pScreen.y - marginY;
-            else if (pScreen.y > canvas.height - marginY) diffScreenY = pScreen.y - (canvas.height - marginY);
-
-            if (diffScreenX !== 0 || diffScreenY !== 0) {
-                const targetCamX = (diffScreenY * 2 + diffScreenX) / 2;
-                const targetCamY = (diffScreenY * 2 - diffScreenX) / 2;
-
-                camera.x += targetCamX * 0.15;
-                camera.y += targetCamY * 0.15;
-            }
-
-            const dCamX = camera.x - oldCamX;
-            const dCamY = camera.y - oldCamY;
-            const dIsoX = dCamX - dCamY;
-            const dIsoY = (dCamX + dCamY) / 2;
-
-            if (Math.random() < 0.0008) { 
-                const side = Math.random() > 0.5 ? 1 : -1;
-                const flockSize = Math.floor(Math.random() * 3) + 1; 
-                const baseY = Math.random() * canvas.height;
-                const baseVx = side === 1 ? (0.6 * currentWorldSpeed + Math.random() * 1.2) : -(0.6 * currentWorldSpeed + Math.random() * 1.2); 
-                const baseVy = (Math.random() - 0.5) * 0.5;
-
-                for (let j = 0; j < flockSize; j++) {
-                    birds.push({
-                        x: (side === 1 ? -100 : canvas.width + 100) + (Math.random() * 60 - 30),
-                        y: baseY + (Math.random() * 80 - 40),
-                        z: 60 + Math.random() * 100, 
-                        vx: baseVx + (Math.random() * 0.2 - 0.1),
-                        vy: baseVy + (Math.random() * 0.2 - 0.1),
-                        animOffset: Math.random() * Math.PI * 2,
-                        color1: '#ecf0f1', color2: '#bdc3c7'
-                    });
+            if (currentTile && currentTile.floor0 && currentTile.floor0.stairsDir > -1) {
+                let rx = player.x - cGridX * TILE_SIZE;
+                let ry = player.y - cGridY * TILE_SIZE;
+                let progress = 0;
+                let sDir = currentTile.floor0.stairsDir;
+                
+                if (sDir === 0) progress = 1 - (ry / TILE_SIZE);
+                else if (sDir === 1) progress = rx / TILE_SIZE;
+                else if (sDir === 2) progress = ry / TILE_SIZE;
+                else if (sDir === 3) progress = 1 - (rx / TILE_SIZE);
+                
+                progress = Math.max(0, Math.min(1, progress * 1.2 - 0.1));
+                targetVisualZ = progress * Z_HEIGHT;
+                
+                if (progress > 0.5) player.baseLevel = 1;
+                else player.baseLevel = 0;
+            } else {
+                let f = player.baseLevel >= 1 ? currentTile?.floor1 : currentTile?.floor0;
+                if (!f) {
+                    player.hp -= 20; 
+                    let newRoot = '0,0'; if (!raftTiles.has('0,0')) newRoot = raftTiles.keys().next().value;
+                    if (newRoot) { let [rx, ry] = newRoot.split(',').map(Number); player.x = rx * TILE_SIZE + TILE_SIZE/2; player.y = ry * TILE_SIZE + TILE_SIZE/2; player.baseLevel = 0; playSound('hit'); }
                 }
             }
-            for (let i = birds.length - 1; i >= 0; i--) {
-                let b = birds[i]; b.x += b.vx; b.y += b.vy;
-                if (b.x < -200 || b.x > canvas.width + 200) birds.splice(i, 1);
+
+            player.visualZ += (targetVisualZ - player.visualZ) * 0.3;
+
+            const oldCamX = camera.x; const oldCamY = camera.y;
+            let pScreen = worldToScreen(player.x, player.y, player.visualZ);
+            const marginX = canvas.width * 0.35; const marginY = canvas.height * 0.35;
+            let diffScreenX = 0; let diffScreenY = 0;
+
+            if (pScreen.x < marginX) diffScreenX = pScreen.x - marginX; else if (pScreen.x > canvas.width - marginX) diffScreenX = pScreen.x - (canvas.width - marginX);
+            if (pScreen.y < marginY) diffScreenY = pScreen.y - marginY; else if (pScreen.y > canvas.height - marginY) diffScreenY = pScreen.y - (canvas.height - marginY);
+
+            if (diffScreenX !== 0 || diffScreenY !== 0) {
+                camera.x += ((diffScreenY * 2 + diffScreenX) / 2) * 0.15;
+                camera.y += ((diffScreenY * 2 - diffScreenX) / 2) * 0.15;
             }
+
+            const dCamX = camera.x - oldCamX; const dCamY = camera.y - oldCamY;
+            const dIsoX = dCamX - dCamY; const dIsoY = (dCamX + dCamY) / 2;
+
+            if (Math.random() < 0.0008) { 
+                const side = Math.random() > 0.5 ? 1 : -1; const flockSize = Math.floor(Math.random() * 3) + 1; const baseY = Math.random() * canvas.height;
+                const baseVx = side === 1 ? (0.6 * currentWorldSpeed + Math.random() * 1.2) : -(0.6 * currentWorldSpeed + Math.random() * 1.2); const baseVy = (Math.random() - 0.5) * 0.5;
+                for (let j = 0; j < flockSize; j++) {
+                    birds.push({ x: (side === 1 ? -100 : canvas.width + 100) + (Math.random() * 60 - 30), y: baseY + (Math.random() * 80 - 40), z: 60 + Math.random() * 100, vx: baseVx + (Math.random() * 0.2 - 0.1), vy: baseVy + (Math.random() * 0.2 - 0.1), animOffset: Math.random() * Math.PI * 2, color1: '#ecf0f1', color2: '#bdc3c7' });
+                }
+            }
+            for (let i = birds.length - 1; i >= 0; i--) { let b = birds[i]; b.x += b.vx; b.y += b.vy; if (b.x < -200 || b.x > canvas.width + 200) birds.splice(i, 1); }
 
             if (Math.random() < 0.006) {
-                let randType = 'wood';
-                let roll = Math.random();
-                if (roll > 0.85) randType = 'barrel';
-                else if (roll > 0.5) randType = 'scrap';
-                
+                let randType = 'wood'; let roll = Math.random(); if (roll > 0.85) randType = 'barrel'; else if (roll > 0.5) randType = 'scrap';
                 debrisList.push({ x: camera.x + (Math.random() * 1600) - 800, y: camera.y - 800, type: randType, isHooked: false, rot: Math.random() });
             }
-            
-            for (let i = debrisList.length - 1; i >= 0; i--) {
-                let d = debrisList[i];
-                if (!d.isHooked) { d.y += currentWorldSpeed; if (d.y > camera.y + 1500) debrisList.splice(i, 1); }
-            }
+            for (let i = debrisList.length - 1; i >= 0; i--) { let d = debrisList[i]; if (!d.isHooked) { d.y += currentWorldSpeed; if (d.y > camera.y + 1500) debrisList.splice(i, 1); } }
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
-                let p = projectiles[i]; 
-                p.x -= dIsoX; p.y -= dIsoY;
-                p.x += p.vx; p.y += p.vy; p.life--;
+                let p = projectiles[i]; p.x -= dIsoX; p.y -= dIsoY; p.x += p.vx; p.y += p.vy; p.life--;
                 
                 if (manta.state === 'APPROACHING' || manta.state === 'ATTACHED') {
-                    const mScreen = worldToScreen(manta.x, manta.y);
+                    const mScreen = worldToScreen(manta.x, manta.y, 0);
                     if (Math.hypot(p.x - mScreen.x, p.y - mScreen.y) < 50) { playSound('hit'); manta.hp--; if (manta.hp <= 0) manta.state = 'FLEEING'; projectiles.splice(i, 1); continue; }
                 }
                 
-                // NOUVEAU : Collision Projectile vs Grand Oiseau
                 if (giantBird.active && (giantBird.state === 'DIVING' || giantBird.state === 'ASCENDING' || giantBird.state === 'CIRCLING')) {
-                    const bScreen = worldToScreen(giantBird.x, giantBird.y);
-                    bScreen.y -= giantBird.z;
+                    const bScreen = worldToScreen(giantBird.x, giantBird.y, giantBird.z);
                     if (Math.hypot(p.x - bScreen.x, p.y - bScreen.y) < 50) {
-                        playSound('hit');
-                        giantBird.hp--;
+                        playSound('hit'); giantBird.hp--;
                         if (giantBird.hp <= 0) {
-                            giantBird.active = false;
-                            giantBird.state = 'WAITING';
-                            giantBird.spawnTimer = 18000; 
-                            for (let m = 0; m < 4; m++) {
-                                debrisList.push({ 
-                                    x: giantBird.x + (Math.random() * 80 - 40), 
-                                    y: giantBird.y + (Math.random() * 80 - 40), 
-                                    type: 'meat', isHooked: false, rot: Math.random() 
-                                });
-                            }
+                            giantBird.active = false; giantBird.state = 'WAITING'; giantBird.spawnTimer = 18000; 
+                            for (let m = 0; m < 4; m++) { debrisList.push({ x: giantBird.x + (Math.random() * 80 - 40), y: giantBird.y + (Math.random() * 80 - 40), type: 'meat', isHooked: false, rot: Math.random() }); }
                         }
-                        projectiles.splice(i, 1);
-                        continue;
+                        projectiles.splice(i, 1); continue;
                     }
                 }
 
                 for (let j = birds.length - 1; j >= 0; j--) {
                     let b = birds[j];
-                    if (Math.hypot(p.x - b.x, p.y - b.y) < 30) {
-                        playSound('hit');
-                        inventory.meat++;
-                        checkTutorial('food'); 
-                        updateUI();
-                        
-                        birds.splice(j, 1);
-                        projectiles.splice(i, 1);
-                        break;
-                    }
+                    if (Math.hypot(p.x - b.x, p.y - b.y) < 30) { playSound('hit'); inventory.meat++; checkTutorial('food'); updateUI(); birds.splice(j, 1); projectiles.splice(i, 1); break; }
                 }
 
                 if (p.life <= 0 && projectiles[i]) projectiles.splice(i, 1);
@@ -1965,7 +1680,6 @@
 
             if (manta.state === 'COOLDOWN') {
                 if (hasCraftedTable) manta.cooldown--;
-                
                 if (manta.cooldown <= 0 && raftTiles.size > 1 && hasCraftedTable) { 
                     let edges = getPeripheralTiles();
                     if (edges.length > 0) {
@@ -1984,10 +1698,7 @@
                 else {
                     manta.timer++;
                     if (manta.timer >= manta.maxTimer) {
-                        playSound('hit');
-                        raftTiles.delete(manta.targetTile.key); 
-                        manta.state = 'FLEEING';
-                        checkRaftIntegrity(); 
+                        playSound('hit'); raftTiles.delete(manta.targetTile.key); manta.state = 'FLEEING'; checkRaftIntegrity(); 
                     }
                 }
             } else if (manta.state === 'FLEEING') {
@@ -1995,31 +1706,22 @@
                 if (manta.x < camera.x - 1500 || manta.y > camera.y + 1500) { manta.state = 'COOLDOWN'; manta.cooldown = 3600 + Math.random() * 3600; }
             }
 
-            pScreen = worldToScreen(player.x, player.y);
+            pScreen = worldToScreen(player.x, player.y, player.visualZ);
             if (activeTool === 'hook') {
                 if (hook.state === 'IDLE') {
                     hook.x = pScreen.x; hook.y = pScreen.y; if (mouse.isDown) hook.state = 'CHARGING';
-                } else if (hook.state === 'CHARGING') {
-                    hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = Math.min(hook.charge + hook.chargeRate, hook.maxCharge);
-                }
+                } else if (hook.state === 'CHARGING') { hook.x = pScreen.x; hook.y = pScreen.y; hook.charge = Math.min(hook.charge + hook.chargeRate, hook.maxCharge); }
             } else { if(hook.state === 'CHARGING') { hook.state = 'IDLE'; hook.charge = 0; } }
 
-            if (hook.state === 'THROWN' || hook.state === 'RETRACTING') {
-                hook.x -= dIsoX; hook.y -= dIsoY;
-                hook.targetX -= dIsoX; hook.targetY -= dIsoY;
-            }
+            if (hook.state === 'THROWN' || hook.state === 'RETRACTING') { hook.x -= dIsoX; hook.y -= dIsoY; hook.targetX -= dIsoX; hook.targetY -= dIsoY; }
 
             if (hook.state === 'THROWN') {
                 const dx = hook.targetX - hook.x, dy = hook.targetY - hook.y, dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < hook.speed) hook.state = 'RETRACTING'; else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
                 for (let d of debrisList) {
                     if (d.isHooked) continue;
-                    const screenD = worldToScreen(d.x, d.y);
-                    if (Math.hypot(hook.x - screenD.x, hook.y - screenD.y) < 30) { 
-                        playSound('catch'); 
-                        hook.caughtDebris.push(d); 
-                        d.isHooked = true; 
-                    }
+                    const screenD = worldToScreen(d.x, d.y, 0);
+                    if (Math.hypot(hook.x - screenD.x, hook.y - screenD.y) < 30) { playSound('catch'); hook.caughtDebris.push(d); d.isHooked = true; }
                 }
             } else if (hook.state === 'RETRACTING') {
                 const dx = pScreen.x - hook.x, dy = pScreen.y - hook.y, dist = Math.sqrt(dx*dx + dy*dy);
@@ -2027,17 +1729,11 @@
                     hook.state = 'IDLE';
                     if (hook.caughtDebris.length > 0) { 
                         for (let d of hook.caughtDebris) { 
-                            if (d.type === 'barrel') {
-                                inventory.cloth += 1 + Math.floor(Math.random() * 3);
-                                inventory.wood += 1 + Math.floor(Math.random() * 3);
-                                inventory.scrap += 1 + Math.floor(Math.random() * 2);
-                            } else {
-                                inventory[d.type]++; 
-                            }
+                            if (d.type === 'barrel') { inventory.cloth += 1 + Math.floor(Math.random() * 3); inventory.wood += 1 + Math.floor(Math.random() * 3); inventory.scrap += 1 + Math.floor(Math.random() * 2); } 
+                            else { inventory[d.type]++; }
                             debrisList = debrisList.filter(deb => deb !== d); 
                         }
-                        checkTutorial('hookDebris'); 
-                        updateUI(); hook.caughtDebris = []; 
+                        checkTutorial('hookDebris'); updateUI(); hook.caughtDebris = []; 
                     }
                 } else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
             }
@@ -2046,15 +1742,17 @@
             if (activeTool === 'platform') {
                 let minDist = Infinity;
                 for (let b of getBuildableTiles()) {
-                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2);
+                    let zOff = b.level === 1 ? Z_HEIGHT : 0;
+                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2, zOff);
                     const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
                     if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hoveredBuildTile = b; }
                 }
-            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook' || activeTool === 'sail' || activeTool === 'torch') {
+            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook' || activeTool === 'sail' || activeTool === 'torch' || activeTool === 'wall' || activeTool === 'stairs') {
                 hoveredExistingTile = getHoveredExistingTile();
             }
         }
 
+        // --- DRAW VISUALS OVERHAUL ---
         function drawPoly(pts, fill, stroke, lineWidth=1) {
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y);
@@ -2064,8 +1762,11 @@
             if(stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
         }
 
-        function drawTexturedTile(lx, ly, size, baseColor, isGhost, ghostColor) {
-            const top = worldToScreen(lx, ly), right = worldToScreen(lx + size, ly), bottom = worldToScreen(lx + size, ly + size), left = worldToScreen(lx, ly + size);
+        function drawTexturedTile(lx, ly, zOffset, isGhost, ghostColor) {
+            const top = worldToScreen(lx, ly, zOffset);
+            const right = worldToScreen(lx + TILE_SIZE, ly, zOffset);
+            const bottom = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset);
+            const left = worldToScreen(lx, ly + TILE_SIZE, zOffset);
             
             if (isGhost) {
                 drawPoly([top, right, bottom, left], ghostColor, 'white', 2);
@@ -2081,30 +1782,96 @@
             drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
             ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
             for(let i=1; i<=3; i++) {
-                let p1 = worldToScreen(lx + (size/4)*i, ly);
-                let p2 = worldToScreen(lx + (size/4)*i, ly + size);
+                let p1 = worldToScreen(lx + (TILE_SIZE/4)*i, ly, zOffset);
+                let p2 = worldToScreen(lx + (TILE_SIZE/4)*i, ly + TILE_SIZE, zOffset);
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
             }
 
-            const th = 12;
+            const th = 8;
             const bL = {x: left.x, y: left.y + th}, bB = {x: bottom.x, y: bottom.y + th}, bR = {x: right.x, y: right.y + th};
             drawPoly([left, bottom, bB, bL], '#a05828', '#733c16'); 
             drawPoly([bottom, right, bR, bB], '#733c16', '#4a250c'); 
         }
 
-        function drawCraftingTable(lx, ly) {
-            const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2);
-            
+        function drawWall(lx, ly, zOffset, dir, isGhost=false) {
+            const top = worldToScreen(lx, ly, zOffset);
+            const right = worldToScreen(lx + TILE_SIZE, ly, zOffset);
+            const bottom = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset);
+            const left = worldToScreen(lx, ly + TILE_SIZE, zOffset);
+
+            const topZ = worldToScreen(lx, ly, zOffset + Z_HEIGHT);
+            const rightZ = worldToScreen(lx + TILE_SIZE, ly, zOffset + Z_HEIGHT);
+            const bottomZ = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset + Z_HEIGHT);
+            const leftZ = worldToScreen(lx, ly + TILE_SIZE, zOffset + Z_HEIGHT);
+
+            if (ASSETS.wall && ASSETS.wall.loaded && !isGhost) {
+                ctx.drawImage(ASSETS.wall.img, top.x + ASSETS.wall.ox, top.y + ASSETS.wall.oy, ASSETS.wall.w, ASSETS.wall.h);
+                return;
+            }
+
+            let pts = []; let c1 = '#8b4513'; let c2 = '#5c4033';
+            if (dir === 0) { pts = [top, right, rightZ, topZ]; c1 = '#7a3e14'; } // Nord
+            else if (dir === 1) { pts = [right, bottom, bottomZ, rightZ]; c1 = '#a0522d'; } // Est
+            else if (dir === 2) { pts = [bottom, left, leftZ, bottomZ]; c1 = '#b86638'; } // Sud
+            else if (dir === 3) { pts = [left, top, topZ, leftZ]; c1 = '#7a3e14'; } // Ouest
+
+            if (isGhost) {
+                drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
+                ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+            } else {
+                drawPoly(pts, c1, c2, 1);
+            }
+        }
+
+        function drawStairs(lx, ly, zOffset, dir, isGhost=false) {
+            const top = worldToScreen(lx, ly, zOffset);
+            const right = worldToScreen(lx + TILE_SIZE, ly, zOffset);
+            const bottom = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset);
+            const left = worldToScreen(lx, ly + TILE_SIZE, zOffset);
+
+            const topZ = worldToScreen(lx, ly, zOffset + Z_HEIGHT);
+            const rightZ = worldToScreen(lx + TILE_SIZE, ly, zOffset + Z_HEIGHT);
+            const bottomZ = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset + Z_HEIGHT);
+            const leftZ = worldToScreen(lx, ly + TILE_SIZE, zOffset + Z_HEIGHT);
+
+            if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost) {
+                ctx.drawImage(ASSETS.stairs.img, top.x + ASSETS.stairs.ox, top.y + ASSETS.stairs.oy, ASSETS.stairs.w, ASSETS.stairs.h);
+                return;
+            }
+
+            let pts = []; 
+            if (dir === 0) pts = [left, bottom, rightZ, topZ];
+            else if (dir === 1) pts = [top, left, bottomZ, rightZ];
+            else if (dir === 2) pts = [top, right, leftZ, bottomZ];
+            else if (dir === 3) pts = [right, bottom, topZ, leftZ];
+
+            if (isGhost) {
+                drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
+                ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+            } else {
+                drawPoly(pts, '#d38b4f', '#a6642f', 1);
+                ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
+                for(let i=1; i<=4; i++) {
+                    let r = i/5;
+                    let p1 = { x: pts[0].x + (pts[3].x - pts[0].x)*r, y: pts[0].y + (pts[3].y - pts[0].y)*r };
+                    let p2 = { x: pts[1].x + (pts[2].x - pts[1].x)*r, y: pts[1].y + (pts[2].y - pts[1].y)*r };
+                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                }
+            }
+        }
+
+        function drawCraftingTable(lx, ly, zOffset) {
+            const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2, zOffset);
             if (ASSETS.table.loaded) {
                 ctx.drawImage(ASSETS.table.img, screen.x + ASSETS.table.ox, screen.y + ASSETS.table.oy, ASSETS.table.w, ASSETS.table.h);
                 return;
             }
 
             const offset = 12; const size = TILE_SIZE - (offset*2); const height = 20;
-            const top = worldToScreen(lx + offset, ly + offset); top.y -= height;
-            const right = worldToScreen(lx + offset + size, ly + offset); right.y -= height;
-            const bottom = worldToScreen(lx + offset + size, ly + offset + size); bottom.y -= height;
-            const left = worldToScreen(lx + offset, ly + offset + size); left.y -= height;
+            const top = worldToScreen(lx + offset, ly + offset, zOffset); top.y -= height;
+            const right = worldToScreen(lx + offset + size, ly + offset, zOffset); right.y -= height;
+            const bottom = worldToScreen(lx + offset + size, ly + offset + size, zOffset); bottom.y -= height;
+            const left = worldToScreen(lx + offset, ly + offset + size, zOffset); left.y -= height;
 
             const bL = {x: left.x, y: left.y + height}, bB = {x: bottom.x, y: bottom.y + height}, bR = {x: right.x, y: right.y + height};
             drawPoly([left, bottom, bB, bL], '#c0392b', '#922b21'); 
@@ -2115,45 +1882,33 @@
             ctx.beginPath(); ctx.ellipse(top.x, top.y + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
         }
 
-        function drawSail(lx, ly) {
-            const center = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2);
-            ctx.fillStyle = '#5c4033';
-            ctx.fillRect(center.x - 3, center.y - 70, 6, 70); 
-            ctx.fillStyle = '#ecf0f1';
-            ctx.beginPath();
-            ctx.moveTo(center.x + 3, center.y - 65);
+        function drawSail(lx, ly, zOffset) {
+            const center = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2, zOffset);
+            ctx.fillStyle = '#5c4033'; ctx.fillRect(center.x - 3, center.y - 70, 6, 70); 
+            ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(center.x + 3, center.y - 65);
             const wind = Math.sin(Date.now() / 300) * 5 + 15; 
             ctx.quadraticCurveTo(center.x + 30 + wind, center.y - 40, center.x + 3, center.y - 15);
             ctx.quadraticCurveTo(center.x + 10 + wind, center.y - 40, center.x + 3, center.y - 65);
-            ctx.fill();
-            ctx.strokeStyle = '#bdc3c7';
-            ctx.lineWidth = 1; ctx.stroke();
-            ctx.fillStyle = '#e67e22';
-            ctx.fillRect(center.x - 4, center.y - 68, 8, 4);
+            ctx.fill(); ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.fillStyle = '#e67e22'; ctx.fillRect(center.x - 4, center.y - 68, 8, 4);
         }
 
-        function drawTorch(lx, ly) {
-            const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2);
-            ctx.fillStyle = '#5c4033';
-            ctx.fillRect(screen.x - 2, screen.y - 30, 4, 30);
-            
+        function drawTorch(lx, ly, zOffset) {
+            const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2, zOffset);
+            ctx.fillStyle = '#5c4033'; ctx.fillRect(screen.x - 2, screen.y - 30, 4, 30);
             const flicker = Math.random() * 2;
-            ctx.fillStyle = '#f1c40f';
-            ctx.beginPath(); ctx.arc(screen.x, screen.y - 32, 4 + flicker, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#e67e22';
-            ctx.beginPath(); ctx.arc(screen.x, screen.y - 30, 6 + flicker, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(screen.x, screen.y - 32, 4 + flicker, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(screen.x, screen.y - 30, 6 + flicker, 0, Math.PI*2); ctx.fill();
         }
 
         function drawPlayer() {
-            const screen = worldToScreen(player.x, player.y);
+            const screen = worldToScreen(player.x, player.y, player.visualZ);
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(screen.x, screen.y, 12, 6, 0, 0, Math.PI*2); ctx.fill();
 
             let bob = 0; let leg1Lift = 0; let leg2Lift = 0;
             if (player.isMoving) {
-                const speed = 0.25;
-                bob = Math.abs(Math.sin(player.walkAnim * speed)) * 3; 
-                leg1Lift = Math.max(0, Math.sin(player.walkAnim * speed)) * 6; 
-                leg2Lift = Math.max(0, Math.cos(player.walkAnim * speed)) * 6; 
+                const speed = 0.25; bob = Math.abs(Math.sin(player.walkAnim * speed)) * 3; 
+                leg1Lift = Math.max(0, Math.sin(player.walkAnim * speed)) * 6; leg2Lift = Math.max(0, Math.cos(player.walkAnim * speed)) * 6; 
             }
 
             const x = screen.x; const y = screen.y - bob;
@@ -2161,8 +1916,7 @@
             if (ASSETS.player.loaded) {
                 ctx.drawImage(ASSETS.player.img, x + ASSETS.player.ox, y + ASSETS.player.oy, ASSETS.player.w, ASSETS.player.h);
             } else {
-                ctx.fillStyle = '#2980b9'; 
-                ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
+                ctx.fillStyle = '#2980b9'; ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
                 ctx.fillStyle = '#e67e22'; drawPoly([{x:x-8, y:y-26}, {x:x+8, y:y-26}, {x:x+7, y:y-12}, {x:x-7, y:y-12}], '#e67e22', '#d35400');
                 ctx.fillStyle = '#f5b041'; ctx.fillRect(x - 6, y - 38, 12, 12);
                 ctx.fillStyle = '#5c4033'; ctx.fillRect(x - 7, y - 40, 14, 5); ctx.fillRect(x - 7, y - 40, 4, 10);
@@ -2187,134 +1941,80 @@
         function drawDebris3D(d) {
             let screen;
             if (d.isHooked) {
-                const offsetX = (d.x % 20) - 10; const offsetY = (d.y % 20) - 10;
-                screen = {x: hook.x + offsetX, y: hook.y + offsetY};
-            } else {
-                screen = worldToScreen(d.x, d.y);
-            }
+                const offsetX = (d.x % 20) - 10; const offsetY = (d.y % 20) - 10; screen = {x: hook.x + offsetX, y: hook.y + offsetY};
+            } else { screen = worldToScreen(d.x, d.y, 0); }
             
             ctx.save(); ctx.translate(screen.x, screen.y); ctx.translate(0, Math.sin((Date.now() + d.x)/300) * 4);
 
             if (d.type === 'wood') {
-                if (ASSETS.wood.loaded) {
-                    ctx.drawImage(ASSETS.wood.img, ASSETS.wood.ox, ASSETS.wood.oy, ASSETS.wood.w, ASSETS.wood.h);
-                } else {
-                    drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); 
-                    drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); 
-                    drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); 
-                }
+                if (ASSETS.wood.loaded) { ctx.drawImage(ASSETS.wood.img, ASSETS.wood.ox, ASSETS.wood.oy, ASSETS.wood.w, ASSETS.wood.h); } 
+                else { drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); }
             } else if (d.type === 'scrap') {
-                if (ASSETS.scrap.loaded) {
-                    ctx.drawImage(ASSETS.scrap.img, ASSETS.scrap.ox, ASSETS.scrap.oy, ASSETS.scrap.w, ASSETS.scrap.h);
-                } else {
-                    drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); 
-                    drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); 
-                }
+                if (ASSETS.scrap.loaded) { ctx.drawImage(ASSETS.scrap.img, ASSETS.scrap.ox, ASSETS.scrap.oy, ASSETS.scrap.w, ASSETS.scrap.h); } 
+                else { drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); }
             } else if (d.type === 'meat') {
-                drawPoly([{x:-8,y:-4}, {x:8,y:-4}, {x:10,y:4}, {x:-10,y:4}], '#e74c3c', '#c0392b'); 
-                drawPoly([{x:-12,y:0}, {x:-8,y:-2}, {x:-8,y:2}], '#ecf0f1', '#bdc3c7'); 
-                drawPoly([{x:12,y:0}, {x:8,y:-2}, {x:8,y:2}], '#ecf0f1', '#bdc3c7'); 
+                drawPoly([{x:-8,y:-4}, {x:8,y:-4}, {x:10,y:4}, {x:-10,y:4}], '#e74c3c', '#c0392b'); drawPoly([{x:-12,y:0}, {x:-8,y:-2}, {x:-8,y:2}], '#ecf0f1', '#bdc3c7'); drawPoly([{x:12,y:0}, {x:8,y:-2}, {x:8,y:2}], '#ecf0f1', '#bdc3c7'); 
             } else if (d.type === 'barrel') {
-                if (ASSETS.barrel.loaded) {
-                    ctx.drawImage(ASSETS.barrel.img, ASSETS.barrel.ox, ASSETS.barrel.oy, ASSETS.barrel.w, ASSETS.barrel.h);
-                } else {
-                    drawPoly([{x:-12,y:-6}, {x:12,y:-6}, {x:10,y:10}, {x:-10,y:10}], '#d35400', '#a04000'); 
-                    drawPoly([{x:-13,y:-4}, {x:13,y:-4}, {x:13,y:0}, {x:-13,y:0}], '#7f8c8d', '#34495e'); 
-                    drawPoly([{x:-11,y:4}, {x:11,y:4}, {x:11,y:8}, {x:-11,y:8}], '#7f8c8d', '#34495e'); 
-                    drawPoly([{x:-12,y:-6}, {x:0,y:-10}, {x:12,y:-6}], '#e67e22', '#d35400'); 
-                }
+                if (ASSETS.barrel.loaded) { ctx.drawImage(ASSETS.barrel.img, ASSETS.barrel.ox, ASSETS.barrel.oy, ASSETS.barrel.w, ASSETS.barrel.h); } 
+                else { drawPoly([{x:-12,y:-6}, {x:12,y:-6}, {x:10,y:10}, {x:-10,y:10}], '#d35400', '#a04000'); drawPoly([{x:-13,y:-4}, {x:13,y:-4}, {x:13,y:0}, {x:-13,y:0}], '#7f8c8d', '#34495e'); drawPoly([{x:-11,y:4}, {x:11,y:4}, {x:11,y:8}, {x:-11,y:8}], '#7f8c8d', '#34495e'); drawPoly([{x:-12,y:-6}, {x:0,y:-10}, {x:12,y:-6}], '#e67e22', '#d35400'); }
             }
             ctx.restore();
         }
 
-        // NOUVEAU : Dessin du Grand Oiseau
         function drawGiantBird() {
             if (!giantBird.active) return;
-            const screenB = worldToScreen(giantBird.x, giantBird.y);
-            const drawY = screenB.y - giantBird.z;
-
-            ctx.save();
-            ctx.translate(screenB.x, drawY);
+            const screenB = worldToScreen(giantBird.x, giantBird.y, 0); const drawY = screenB.y - giantBird.z;
+            ctx.save(); ctx.translate(screenB.x, drawY);
 
             const flap = Math.sin(Date.now() / 80) * 15;
 
-            if (ASSETS.giantBird && ASSETS.giantBird.loaded) {
-                ctx.drawImage(ASSETS.giantBird.img, ASSETS.giantBird.ox, ASSETS.giantBird.oy, ASSETS.giantBird.w, ASSETS.giantBird.h);
-            } else {
+            if (ASSETS.giantBird && ASSETS.giantBird.loaded) { ctx.drawImage(ASSETS.giantBird.img, ASSETS.giantBird.ox, ASSETS.giantBird.oy, ASSETS.giantBird.w, ASSETS.giantBird.h); } 
+            else {
                 drawPoly([{x: 0, y: -25}, {x: -15, y: 15}, {x: 0, y: 35}, {x: 15, y: 15}], '#2c3e50', '#1a252f');
                 drawPoly([{x: -15, y: 5}, {x: -50, y: -15 + flap}, {x: -5, y: 20}], '#34495e', '#2c3e50');
                 drawPoly([{x: 15, y: 5}, {x: 50, y: -15 + flap}, {x: 5, y: 20}], '#34495e', '#2c3e50');
                 drawPoly([{x: -10, y: 30}, {x: 0, y: 50}, {x: 10, y: 30}], '#1a252f', '#000000');
-                
-                ctx.fillStyle = '#e74c3c';
-                ctx.beginPath(); ctx.arc(-5, -10, 3, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(5, -10, 3, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(-5, -10, 3, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(5, -10, 3, 0, Math.PI*2); ctx.fill();
             }
 
             if (giantBird.hp < giantBird.maxHp && giantBird.state !== 'FLEEING') {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -50, 40, 6);
-                ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -50, 40 * (giantBird.hp/giantBird.maxHp), 6);
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -50, 40, 6); ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -50, 40 * (giantBird.hp/giantBird.maxHp), 6);
             }
-
             ctx.restore();
         }
 
         function drawManta() {
             if (manta.state === 'COOLDOWN') return;
-            const screenM = worldToScreen(manta.x, manta.y);
+            const screenM = worldToScreen(manta.x, manta.y, 0);
             ctx.save(); ctx.translate(screenM.x, screenM.y); ctx.translate(0, Math.sin(Date.now() / 200) * 12);
             
             if (manta.state === 'APPROACHING') ctx.globalAlpha = 0.5; 
             
-            if (ASSETS.manta.loaded) {
-                ctx.drawImage(ASSETS.manta.img, ASSETS.manta.ox, ASSETS.manta.oy, ASSETS.manta.w, ASSETS.manta.h);
-            } else {
-                drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); 
-                drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); 
-                ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
+            if (ASSETS.manta.loaded) { ctx.drawImage(ASSETS.manta.img, ASSETS.manta.ox, ASSETS.manta.oy, ASSETS.manta.w, ASSETS.manta.h); } 
+            else {
+                drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); 
+                ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
                 ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-10, -10, 3, 0, Math.PI*2); ctx.arc(10, -10, 3, 0, Math.PI*2); ctx.fill();
             }
 
-            if (manta.hp < manta.maxHp && manta.state !== 'FLEEING') {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -45, 40, 6);
-                ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -45, 40 * (manta.hp/manta.maxHp), 6);
-            }
+            if (manta.hp < manta.maxHp && manta.state !== 'FLEEING') { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -45, 40, 6); ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -45, 40 * (manta.hp/manta.maxHp), 6); }
             ctx.restore();
 
             if (manta.state === 'APPROACHING' || manta.state === 'ATTACHED') {
-                const tgt = worldToScreen(manta.targetTile.x * TILE_SIZE + TILE_SIZE/2, manta.targetTile.y * TILE_SIZE + TILE_SIZE/2);
-                ctx.fillStyle = `rgba(231, 76, 60, ${Math.abs(Math.sin(Date.now() / 150))})`; 
-                ctx.beginPath(); ctx.arc(tgt.x, tgt.y, 25, 0, Math.PI*2); ctx.fill();
-                if (manta.state === 'ATTACHED') {
-                    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40, 8);
-                    ctx.fillStyle = '#f1c40f'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40 * (manta.timer / manta.maxTimer), 8);
-                }
+                const tgt = worldToScreen(manta.targetTile.x * TILE_SIZE + TILE_SIZE/2, manta.targetTile.y * TILE_SIZE + TILE_SIZE/2, 0);
+                ctx.fillStyle = `rgba(231, 76, 60, ${Math.abs(Math.sin(Date.now() / 150))})`; ctx.beginPath(); ctx.arc(tgt.x, tgt.y, 25, 0, Math.PI*2); ctx.fill();
+                if (manta.state === 'ATTACHED') { ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40, 8); ctx.fillStyle = '#f1c40f'; ctx.fillRect(tgt.x - 20, tgt.y - 40, 40 * (manta.timer / manta.maxTimer), 8); }
             }
         }
 
+        // --- GESTION DU DESSIN PRINCIPAL PAR COUCHES ---
         function draw() {
-            function lerpColorA(c1, c2, t) {
-                return {
-                    r: Math.floor(c1.r + (c2.r - c1.r) * t),
-                    g: Math.floor(c1.g + (c2.g - c1.g) * t),
-                    b: Math.floor(c1.b + (c2.b - c1.b) * t),
-                    a: c1.a + (c2.a - c1.a) * t
-                };
-            }
+            function lerpColorA(c1, c2, t) { return { r: Math.floor(c1.r + (c2.r - c1.r) * t), g: Math.floor(c1.g + (c2.g - c1.g) * t), b: Math.floor(c1.b + (c2.b - c1.b) * t), a: c1.a + (c2.a - c1.a) * t }; }
 
-            const cNight = {r: 10, g: 14, b: 41, a: 0}; 
-            const cOrange = {r: 253, g: 120, b: 80, a: 0}; 
-            const cDay = {r: 116, g: 185, b: 255, a: 0}; 
-            const cDim = {r: 90, g: 150, b: 220, a: 0};
-
-            const oNight = {r: 5, g: 5, b: 20, a: 0.92}; 
-            const oDusk = {r: 15, g: 10, b: 40, a: 0.6}; 
-            const oOrange = {r: 200, g: 80, b: 0, a: 0.3}; 
-            const oDay = {r: 0, g: 0, b: 0, a: 0};
+            const cNight = {r: 10, g: 14, b: 41, a: 0}; const cOrange = {r: 253, g: 120, b: 80, a: 0}; const cDay = {r: 116, g: 185, b: 255, a: 0}; const cDim = {r: 90, g: 150, b: 220, a: 0};
+            const oNight = {r: 5, g: 5, b: 20, a: 0.92}; const oDusk = {r: 15, g: 10, b: 40, a: 0.6}; const oOrange = {r: 200, g: 80, b: 0, a: 0.3}; const oDay = {r: 0, g: 0, b: 0, a: 0};
 
             let sky, over;
-            
             if (timeOfDay < 5) { sky = cNight; over = oNight; } 
             else if (timeOfDay < 7) { let t = (timeOfDay - 5) / 2; sky = lerpColorA(cNight, cOrange, t); over = lerpColorA(oNight, oOrange, t); } 
             else if (timeOfDay < 9) { let t = (timeOfDay - 7) / 2; sky = lerpColorA(cOrange, cDay, t); over = lerpColorA(oOrange, oDay, t); } 
@@ -2324,205 +2024,180 @@
             else if (timeOfDay < 22) { let t = (timeOfDay - 20.5) / 1.5; sky = lerpColorA(cDim, cNight, t); over = lerpColorA(oDusk, oNight, t); } 
             else { sky = cNight; over = oNight; }
 
-            ctx.fillStyle = `rgb(${sky.r}, ${sky.g}, ${sky.b})`; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = `rgb(${sky.r}, ${sky.g}, ${sky.b})`; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            for (let c of clouds) {
-                ctx.beginPath();
-                for (let p of c.parts) {
-                    ctx.moveTo(c.x + p.ox + p.r, c.y + p.oy);
-                    ctx.arc(c.x + p.ox, c.y + p.oy, p.r, 0, Math.PI * 2);
-                }
-                ctx.fill();
-            }
+            for (let c of clouds) { ctx.beginPath(); for (let p of c.parts) { ctx.moveTo(c.x + p.ox + p.r, c.y + p.oy); ctx.arc(c.x + p.ox, c.y + p.oy, p.r, 0, Math.PI * 2); } ctx.fill(); }
 
             ctx.lineWidth = 2;
             for (let w of windLines) {
-                let alpha = Math.min(1, w.life / 30) * Math.min(1, (w.maxLife - w.life) / 30) * 0.4;
-                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-                ctx.beginPath();
-                
-                if (w.type === 'line') {
-                    ctx.moveTo(w.x, w.y); 
-                    ctx.lineTo(w.x + w.length, w.y - w.length * 0.5);
-                } else if (w.type === 'swirl') {
-                    let maxT = Math.min(Math.PI * 2.5, (w.life / 40) * Math.PI * 2.5);
-                    for(let t = 0; t <= maxT; t += 0.2) {
-                        let r = (t / (Math.PI * 2.5)) * w.size;
-                        let px = w.x + Math.cos(t) * r;
-                        let py = w.y + Math.sin(t) * r * 0.5; 
-                        if (t === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
-                    }
-                }
+                let alpha = Math.min(1, w.life / 30) * Math.min(1, (w.maxLife - w.life) / 30) * 0.4; ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`; ctx.beginPath();
+                if (w.type === 'line') { ctx.moveTo(w.x, w.y); ctx.lineTo(w.x + w.length, w.y - w.length * 0.5); } 
+                else if (w.type === 'swirl') { let maxT = Math.min(Math.PI * 2.5, (w.life / 40) * Math.PI * 2.5); for(let t = 0; t <= maxT; t += 0.2) { let r = (t / (Math.PI * 2.5)) * w.size; let px = w.x + Math.cos(t) * r; let py = w.y + Math.sin(t) * r * 0.5; if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); } }
                 ctx.stroke();
             }
 
             if (gameState === 'START') return;
 
-            for (let d of debrisList) {
-                if (!d.isHooked) drawDebris3D(d);
-            }
+            for (let d of debrisList) { if (!d.isHooked) drawDebris3D(d); }
 
-            let sortedTiles = Array.from(raftTiles.keys()).map(t => {
-                let [x, y] = t.split(',').map(Number); return {x, y, data: raftTiles.get(t), key: t};
-            }).sort((a, b) => (a.x + a.y) - (b.x + b.y));
+            let sortedKeys = Array.from(raftTiles.keys()).sort((a, b) => {
+                let [ax, ay] = a.split(',').map(Number); let [bx, by] = b.split(',').map(Number); return (ax + ay) - (bx + by);
+            });
 
-            for (let tile of sortedTiles) {
-                drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, '#CD853F');
-                if (tile.data.hasTable) drawCraftingTable(tile.x * TILE_SIZE, tile.y * TILE_SIZE);
-                if (tile.data.hasSail) drawSail(tile.x * TILE_SIZE, tile.y * TILE_SIZE);
-                if (tile.data.hasTorch) drawTorch(tile.x * TILE_SIZE, tile.y * TILE_SIZE);
+            // ================= LAYER 0 (RDC) =================
+            for (let key of sortedKeys) {
+                let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
+                if (data.floor0) {
+                    drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, 0);
+                    if (data.floor0.walls[0]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, 0); 
+                    if (data.floor0.walls[3]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, 3); 
+                    if (data.floor0.stairsDir > -1) drawStairs(x * TILE_SIZE, y * TILE_SIZE, 0, data.floor0.stairsDir);
+                    if (data.floor0.hasTable) drawCraftingTable(x * TILE_SIZE, y * TILE_SIZE, 0);
+                    if (data.floor0.hasSail) drawSail(x * TILE_SIZE, y * TILE_SIZE, 0);
+                    if (data.floor0.hasTorch) drawTorch(x * TILE_SIZE, y * TILE_SIZE, 0);
+                }
 
-                if (hoveredExistingTile && hoveredExistingTile.key === tile.key) {
-                    if (activeTool === 'axe') drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, null, true, 'rgba(231, 76, 60, 0.5)');
-                    else if (tile.data.hasTable || tile.data.hasSail || tile.data.hasTorch) drawTexturedTile(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, null, true, 'rgba(255, 255, 255, 0.3)');
+                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 0) {
+                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, 0, null, true, 'rgba(231, 76, 60, 0.5)');
+                    else if (activeTool === 'wall' && !data.floor0.walls[buildRotation]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, buildRotation, true);
+                    else if (activeTool === 'stairs' && data.floor0.stairsDir === -1) drawStairs(x * TILE_SIZE, y * TILE_SIZE, 0, buildRotation, true);
                 }
             }
 
-            for (let st of sinkingTiles) {
-                ctx.save();
-                ctx.translate(0, st.z);
-                ctx.globalAlpha = st.opacity;
-                drawTexturedTile(st.x * TILE_SIZE, st.y * TILE_SIZE, TILE_SIZE, '#CD853F');
-                if (st.data.hasTable) drawCraftingTable(st.x * TILE_SIZE, st.y * TILE_SIZE);
-                if (st.data.hasSail) drawSail(st.x * TILE_SIZE, st.y * TILE_SIZE);
-                if (st.data.hasTorch) drawTorch(st.x * TILE_SIZE, st.y * TILE_SIZE);
-                ctx.restore();
-            }
+            if (player.baseLevel < 1) drawPlayer(); // Le joueur est dessiné ici s'il est au RDC ou dans les escaliers
 
-            if (activeTool === 'platform') {
-                let buildables = getBuildableTiles().sort((a, b) => (a.x + a.y) - (b.x + b.y));
-                for (let b of buildables) {
-                    let isHovered = (hoveredBuildTile && hoveredBuildTile.x === b.x && hoveredBuildTile.y === b.y);
-                    let color = isHovered ? (inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)') : 'rgba(255, 255, 255, 0.15)'; 
-                    drawTexturedTile(b.x * TILE_SIZE, b.y * TILE_SIZE, TILE_SIZE, null, true, color);
+            for (let key of sortedKeys) {
+                let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
+                if (data.floor0) {
+                    if (data.floor0.walls[1]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, 1); 
+                    if (data.floor0.walls[2]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, 2); 
                 }
             }
-            if (activeTool === 'table' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail) {
-                let color = inventory.tables > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, TILE_SIZE, null, true, color);
-            }
-            if (activeTool === 'sail' && hoveredExistingTile && !hoveredExistingTile.data.hasTable && !hoveredExistingTile.data.hasSail) {
-                let color = inventory.sails > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, TILE_SIZE, null, true, color);
-            }
-            if (activeTool === 'torch' && hoveredExistingTile && !hoveredExistingTile.data.hasTorch) {
-                let color = inventory.torches > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, TILE_SIZE, null, true, color);
+
+            if (activeTool === 'platform' && hoveredBuildTile && hoveredBuildTile.level === 0) {
+                let color = inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'; 
+                drawTexturedTile(hoveredBuildTile.x * TILE_SIZE, hoveredBuildTile.y * TILE_SIZE, 0, null, true, color);
             }
 
-            for (let d of debrisList) {
-                if (d.isHooked) drawDebris3D(d);
-            }
-            
-            drawManta();
-            drawGiantBird();
-            drawPlayer();
+            // ================= LAYER 1 (ÉTAGE) =================
+            if (player.baseLevel < 0.5) ctx.globalAlpha = 0.35; // Transparence si le joueur est en bas !
 
-            for(let p of projectiles) { 
-                ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); 
-                ctx.strokeStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx, p.y - p.vy); ctx.stroke(); 
+            for (let key of sortedKeys) {
+                let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
+                if (data.floor1) {
+                    drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT);
+                    if (data.floor1.walls[0]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, 0); 
+                    if (data.floor1.walls[3]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, 3); 
+                    if (data.floor1.hasTable) drawCraftingTable(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT);
+                    if (data.floor1.hasSail) drawSail(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT);
+                    if (data.floor1.hasTorch) drawTorch(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT);
+                }
+
+                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 1) {
+                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, null, true, 'rgba(231, 76, 60, 0.5)');
+                    else if (activeTool === 'wall' && !data.floor1.walls[buildRotation]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, buildRotation, true);
+                }
             }
+
+            if (player.baseLevel >= 1) drawPlayer();
+
+            for (let key of sortedKeys) {
+                let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
+                if (data.floor1) {
+                    if (data.floor1.walls[1]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, 1); 
+                    if (data.floor1.walls[2]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, 2); 
+                }
+            }
+
+            if (activeTool === 'platform' && hoveredBuildTile && hoveredBuildTile.level === 1) {
+                let color = inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'; 
+                drawTexturedTile(hoveredBuildTile.x * TILE_SIZE, hoveredBuildTile.y * TILE_SIZE, Z_HEIGHT, null, true, color);
+            }
+
+            ctx.globalAlpha = 1.0; 
+
+            // Hologrammes Table, Sail, Torch
+            if (hoveredExistingTile) {
+                let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
+                let zOff = hoveredExistingTile.targetLevel === 1 ? Z_HEIGHT : 0;
+                
+                if (floor) {
+                    if (activeTool === 'table' && !floor.hasTable && !floor.hasSail && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
+                        let color = inventory.tables > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                    }
+                    if (activeTool === 'sail' && !floor.hasTable && !floor.hasSail && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
+                        let color = inventory.sails > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                    }
+                    if (activeTool === 'torch' && !floor.hasTorch && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
+                        let color = inventory.torches > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                    }
+                }
+            }
+
+            drawManta(); drawGiantBird();
+
+            for(let p of projectiles) { ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx, p.y - p.vy); ctx.stroke(); }
 
             if (activeTool === 'hook') {
-                const pScreen = worldToScreen(player.x, player.y), sX = pScreen.x, sY = pScreen.y - 15;
-
+                const pScreen = worldToScreen(player.x, player.y, player.visualZ), sX = pScreen.x, sY = pScreen.y - 15;
                 if (hook.state === 'THROWN' || hook.state === 'RETRACTING') {
                     ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(hook.x, hook.y); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.save(); ctx.translate(hook.x, hook.y);
-                    
-                    if (ASSETS.hook && ASSETS.hook.loaded) {
-                        ctx.drawImage(ASSETS.hook.img, -15, -15, 30, 30);
-                    } else {
-                        ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill();
-                        drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); 
-                    }
+                    if (ASSETS.hook && ASSETS.hook.loaded) ctx.drawImage(ASSETS.hook.img, -15, -15, 30, 30);
+                    else { ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); }
                     ctx.restore();
                 }
-
                 if (hook.state === 'CHARGING') {
                     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40, 6);
-                    ctx.fillStyle = hook.charge > hook.maxCharge * 0.8 ? '#e74c3c' : '#f1c40f'; 
-                    ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40 * (hook.charge / hook.maxCharge), 6);
+                    ctx.fillStyle = hook.charge > hook.maxCharge * 0.8 ? '#e74c3c' : '#f1c40f'; ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40 * (hook.charge / hook.maxCharge), 6);
                     ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(mouse.x, mouse.y); ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
                 }
             }
 
             for (let b of birds) {
-                ctx.fillStyle = 'rgba(0,0,0,0.15)';
-                ctx.beginPath(); ctx.ellipse(b.x, b.y + b.z, 6, 3, 0, 0, Math.PI*2); ctx.fill();
-
+                ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(b.x, b.y + b.z, 6, 3, 0, 0, Math.PI*2); ctx.fill();
                 const flap = Math.sin(Date.now() / 80 + b.animOffset) * 8;
-                
-                drawPoly([{x:b.x, y:b.y}, {x:b.x - 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color1);
-                drawPoly([{x:b.x, y:b.y}, {x:b.x + 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color2);
+                drawPoly([{x:b.x, y:b.y}, {x:b.x - 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color1); drawPoly([{x:b.x, y:b.y}, {x:b.x + 8, y:b.y - flap}, {x:b.x, y:b.y + 4}], b.color2);
             }
 
-            // Ombres pour les créatures volantes hautes
             if (giantBird.active && giantBird.z > 0 && over.a < 0.8) {
-                const screenB = worldToScreen(giantBird.x, giantBird.y);
-                const shadowSize = Math.max(5, 30 - giantBird.z/15);
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                ctx.beginPath(); ctx.ellipse(screenB.x, screenB.y, shadowSize, shadowSize * 0.5, 0, 0, Math.PI*2); ctx.fill();
+                const screenB = worldToScreen(giantBird.x, giantBird.y, 0); const shadowSize = Math.max(5, 30 - giantBird.z/15);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(screenB.x, screenB.y, shadowSize, shadowSize * 0.5, 0, 0, Math.PI*2); ctx.fill();
             }
 
             if (over.a > 0.01) {
                 lightCtx.clearRect(0, 0, lightCanvas.width, lightCanvas.height);
-                
-                lightCtx.globalCompositeOperation = 'source-over';
-                lightCtx.fillStyle = `rgba(${over.r}, ${over.g}, ${over.b}, ${over.a})`;
-                lightCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
-
+                lightCtx.globalCompositeOperation = 'source-over'; lightCtx.fillStyle = `rgba(${over.r}, ${over.g}, ${over.b}, ${over.a})`; lightCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
                 lightCtx.globalCompositeOperation = 'destination-out';
-                
                 function drawLightRadius(x, y, radius, intensity) {
-                    let grad = lightCtx.createRadialGradient(x, y, 0, x, y, radius);
-                    grad.addColorStop(0, `rgba(0,0,0,${intensity})`);
-                    grad.addColorStop(1, 'rgba(0,0,0,0)');
-                    lightCtx.fillStyle = grad;
-                    lightCtx.beginPath();
-                    lightCtx.arc(x, y, radius, 0, Math.PI*2);
-                    lightCtx.fill();
+                    let grad = lightCtx.createRadialGradient(x, y, 0, x, y, radius); grad.addColorStop(0, `rgba(0,0,0,${intensity})`); grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    lightCtx.fillStyle = grad; lightCtx.beginPath(); lightCtx.arc(x, y, radius, 0, Math.PI*2); lightCtx.fill();
                 }
 
-                const pScreen = worldToScreen(player.x, player.y);
-                drawLightRadius(pScreen.x, pScreen.y - 15, 70, 0.4);
+                const pScreen = worldToScreen(player.x, player.y, player.visualZ); drawLightRadius(pScreen.x, pScreen.y - 15, 70, 0.4);
 
                 raftTiles.forEach((data, key) => {
-                    if (data.hasTorch) {
-                        let [gx, gy] = key.split(',').map(Number);
-                        const screen = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2);
-                        drawLightRadius(screen.x, screen.y - 30, 250, 1);
-                    }
+                    let [gx, gy] = key.split(',').map(Number);
+                    if (data.floor0 && data.floor0.hasTorch) { const screen = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2, 0); drawLightRadius(screen.x, screen.y - 30, 250, 1); }
+                    if (data.floor1 && data.floor1.hasTorch) { const screen = worldToScreen(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2, Z_HEIGHT); drawLightRadius(screen.x, screen.y - 30, 250, 1); }
                 });
 
-                if (manta.state !== 'COOLDOWN') {
-                    const mScreen = worldToScreen(manta.x, manta.y);
-                    drawLightRadius(mScreen.x, mScreen.y, 100, 0.5);
-                }
-
+                if (manta.state !== 'COOLDOWN') { const mScreen = worldToScreen(manta.x, manta.y, 0); drawLightRadius(mScreen.x, mScreen.y, 100, 0.5); }
                 ctx.drawImage(lightCanvas, 0, 0);
             }
 
             if (vJoystick.active) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.beginPath(); ctx.arc(vJoystick.baseX, vJoystick.baseY, vJoystick.maxDist, 0, Math.PI*2); ctx.fill();
-                
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.beginPath(); ctx.arc(vJoystick.knobX, vJoystick.knobY, vJoystick.maxDist / 2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; ctx.beginPath(); ctx.arc(vJoystick.baseX, vJoystick.baseY, vJoystick.maxDist, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.beginPath(); ctx.arc(vJoystick.knobX, vJoystick.knobY, vJoystick.maxDist / 2, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        function gameLoop() { 
-            update(); 
-            draw(); 
-            requestAnimationFrame(gameLoop); 
-        }
-        
-        updateUI();
-        gameLoop();
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        updateUI(); gameLoop();
     </script>
 </body>
 </html>
