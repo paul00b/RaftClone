@@ -162,7 +162,6 @@
         #distance-panel .dist { font-size: 1rem; color: #f1c40f; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
         #distance-panel .speed { font-size: 0.6rem; color: #bdc3c7; text-transform: uppercase; }
 
-        /* Indicateur de rotation */
         #rotation-hint {
             position: absolute;
             left: 50%;
@@ -358,7 +357,7 @@
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        input[type=range] { -webkit-appearance: none; width: 150px; background: transparent; }
+        input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--accent-color); cursor: pointer; margin-top: -6px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 2px; }
         
@@ -391,7 +390,6 @@
 </head>
 <body>
 
-    <!-- ECRAN DE DEMARRAGE -->
     <div id="start-screen">
         <h1 class="pixel-title">SkyRaft</h1>
         
@@ -403,7 +401,6 @@
 
     <div id="menu-overlay" onclick="closeAllMenus()"></div>
 
-    <!-- UI EN JEU -->
     <div id="ui-layer">
         <div id="hud-top">
             <div id="status-panel" class="panel">
@@ -418,7 +415,6 @@
                 </div>
             </div>
 
-            <!-- Div Navigation -->
             <div id="distance-panel" class="panel">
                 <div style="font-size: 0.6rem; color: var(--text-muted);">JOUR <span id="ui-day">1</span></div>
                 <div class="dist"><span id="ui-distance">0</span> <span id="ui-dist-unit" style="font-size: 0.7em;">m</span></div>
@@ -428,22 +424,25 @@
             <div id="rotation-hint">[R] pour tourner</div>
 
             <div style="display: flex; gap: 8px;">
-                <button class="btn-icon" onclick="toggleMute()">
+                <button class="btn-icon" onclick="toggleMenu('calib')" title="Mode Développeur">
+                    <span class="icon" style="font-size: 1.2rem;">🛠️</span>
+                    <span class="hint">Dev</span>
+                </button>
+                <button class="btn-icon" onclick="toggleMute()" title="Couper le son">
                     <span class="icon" id="icon-mute">🔊</span>
                     <span class="hint" id="ui-mute-key-hint">M</span>
                 </button>
-                <button class="btn-icon" onclick="toggleMenu('settings')">
+                <button class="btn-icon" onclick="toggleMenu('settings')" title="Paramètres">
                     <span class="icon">⚙️</span>
                     <span class="hint">Échap</span>
                 </button>
-                <button class="btn-icon" onclick="toggleMenu('basic')">
+                <button class="btn-icon" onclick="toggleMenu('basic')" title="Construire">
                     <span class="icon">🪚</span>
                     <span class="hint" id="ui-build-key-hint">B</span>
                 </button>
             </div>
         </div>
 
-        <!-- TUTORIEL TO-DO LIST -->
         <div id="tutorial-panel" class="panel" style="opacity: 0;"></div>
 
         <div id="hotbar-container">
@@ -621,7 +620,7 @@
                     <h4>Volume de la Musique</h4>
                     <span id="vol-display">5%</span>
                 </div>
-                <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.05" oninput="updateMusicVolume(this.value)">
+                <input type="range" id="music-vol" style="width: 150px;" min="0" max="1" step="0.05" value="0.05" oninput="updateMusicVolume(this.value)">
             </div>
             
             <h4 style="margin: 10px 0 0 0; color: #f1c40f; text-align: center;">Raccourcis Clavier</h4>
@@ -637,22 +636,96 @@
         </div>
     </div>
 
+    <!-- Menu de Calibrage d'Assets -->
+    <div id="calib-menu" class="panel modal" style="left: auto; right: 20px; top: 20px; transform: none; width: 340px; z-index: 1000;">
+        <div class="modal-header">
+            <h3>📐 Calibrage d'Assets</h3>
+            <div class="close-icon" onclick="toggleMenu('calib')">✖</div>
+        </div>
+        <div class="modal-body" style="gap: 12px; font-size: 0.8rem; padding: 15px;">
+            <select id="calib-select" onchange="loadCalibData()" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 5px;">
+                <option value="platform">Plancher</option>
+                <option value="wood">Débris Bois</option>
+                <option value="scrap">Débris Ferraille</option>
+                <option value="barrel">Débris Tonneau</option>
+                <option value="table">Établi</option>
+                <option value="wall">Mur</option>
+                <option value="stairs">Escalier</option>
+                <option value="manta">Raie Manta</option>
+                <option value="giantBird">Oiseau Géant</option>
+                <option value="player">Personnage</option>
+                <option value="hook">Crochet</option>
+            </select>
+            
+            <input type="text" id="calib-src" placeholder="Lien de l'image (URL)" onchange="applyCalibSrc()" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; font-family: monospace; box-sizing: border-box;">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px;">
+                <strong style="color: #f1c40f;">Taille</strong>
+                <button id="lock-ratio-btn" onclick="toggleLockRatio()" title="Verrouiller les proportions" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); padding: 0;">🔒</button>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">W</span>
+                <input type="range" id="calib-w-slider" min="1" max="400" step="1" oninput="applyCalib('w')" style="flex-grow: 1;">
+                <span id="calib-w-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">H</span>
+                <input type="range" id="calib-h-slider" min="1" max="400" step="1" oninput="applyCalib('h')" style="flex-grow: 1;">
+                <span id="calib-h-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px;">
+                <strong style="color: #f1c40f;">Décalage (Offset)</strong>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">X</span>
+                <input type="range" id="calib-ox-slider" min="-200" max="200" step="1" oninput="applyCalib('ox')" style="flex-grow: 1;">
+                <span id="calib-ox-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">Y</span>
+                <input type="range" id="calib-oy-slider" min="-200" max="200" step="1" oninput="applyCalib('oy')" style="flex-grow: 1;">
+                <span id="calib-oy-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px;">
+                <strong style="color: #f1c40f;">Distorsion (Skew)</strong>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">Sx</span>
+                <input type="range" id="calib-sx-slider" min="-45" max="45" step="0.5" oninput="applyCalib('sx')" style="flex-grow: 1;">
+                <span id="calib-sx-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 15px;">Sy</span>
+                <input type="range" id="calib-sy-slider" min="-45" max="45" step="0.5" oninput="applyCalib('sy')" style="flex-grow: 1;">
+                <span id="calib-sy-val" style="width: 35px; text-align: right; font-family: monospace;">0</span>
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 5px 0;">
+            <button class="btn-craft" onclick="exportCalib()" style="width: 100%;">💾 Exporter le code</button>
+            <p style="font-size: 0.6rem; color: #bdc3c7; text-align: center; margin: 0; line-height: 1.4;">Le modèle 3D restera visible en semi-transparence pour t'aider à aligner ton image avec la grille !</p>
+        </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
         // === GESTIONNAIRE D'ASSETS (IMAGES) ===
         const ASSETS_URLS = {
-            platform: { src: '', w: 60, h: 45, ox: -30, oy: 0 },
-            wood: { src: '', w: 30, h: 15, ox: -15, oy: -5 },
-            scrap: { src: '', w: 30, h: 15, ox: -15, oy: -5 },
-            barrel: { src: '', w: 24, h: 30, ox: -12, oy: -20 },
-            table: { src: '', w: 50, h: 40, ox: -25, oy: -35 },
-            manta: { src: '', w: 100, h: 100, ox: -50, oy: -50 },
-            player: { src: '', w: 32, h: 48, ox: -16, oy: -40 },
-            giantBird: { src: '', w: 120, h: 120, ox: -60, oy: -60 },
-            wall: { src: '', w: 60, h: 65, ox: -30, oy: -45 }, 
-            stairs: { src: '', w: 60, h: 65, ox: -30, oy: -45 } 
-        };
+    platform: { src: 'https://i.ibb.co/MkhTbtyM/plateforme.png', w: 187, h: 141, ox: -90, oy: -33, sx: -1, sy: -0.5 },
+    wood: { src: 'https://i.ibb.co/t9ftXqp/plank.png', w: 45, h: 23, ox: -21, oy: -15, sx: 0, sy: 0 },
+    scrap: { src: 'https://i.ibb.co/dJD2fVN5/ironbar.png', w: 40, h: 20, ox: -15, oy: -10, sx: 0, sy: 0 },
+    barrel: { src: 'https://i.ibb.co/8LC3x7Yt/barrel.png', w: 31, h: 39, ox: -15, oy: -31, sx: 0, sy: 0 },
+    table: { src: '', w: 50, h: 40, ox: -25, oy: -35, sx: 0, sy: 0 },
+    manta: { src: '', w: 100, h: 100, ox: -50, oy: -50, sx: 0, sy: 0 },
+    player: { src: '', w: 32, h: 48, ox: -16, oy: -40, sx: 0, sy: 0 },
+    giantBird: { src: '', w: 120, h: 120, ox: -60, oy: -60, sx: 0, sy: 0 },
+    wall: { src: '', w: 60, h: 65, ox: -30, oy: -45, sx: 0, sy: 0 },
+    stairs: { src: '', w: 60, h: 65, ox: -30, oy: -45, sx: 0, sy: 0 },
+    hook: { src: '', w: 30, h: 30, ox: -15, oy: -15, sx: 0, sy: 0 },
+};
 
         const ASSETS = {};
         for (let key in ASSETS_URLS) {
@@ -700,7 +773,7 @@
         let activeTool = 'hook'; 
         let buildRotation = 0; // 0: N, 1: E, 2: S, 3: W
         
-        let menus = { basic: false, advanced: false, settings: false };
+        let menus = { basic: false, advanced: false, settings: false, calib: false };
 
         let currentTutorialPhase = 0;
         const tutorialState = {
@@ -714,15 +787,11 @@
             { title: "Prendre le large", tasks: [ { id: 'sail', text: '1. Poser une voile' } ] }
         ];
 
-        // --- GESTION DES TUILES 3D ---
         let raftTiles = new Map();
         function initRaft() {
             raftTiles.clear();
             const getDef = () => ({ hasTable: false, hasSail: false, hasTorch: false, walls: [false, false, false, false], stairsDir: -1 });
             raftTiles.set('0,0', { floor0: getDef(), floor1: null }); 
-            raftTiles.set('1,0', { floor0: getDef(), floor1: null }); 
-            raftTiles.set('0,1', { floor0: getDef(), floor1: null }); 
-            raftTiles.set('1,1', { floor0: getDef(), floor1: null }); 
         }
         initRaft();
         
@@ -732,7 +801,7 @@
         
         const PLAYER_SPEED = 2.2;
         const player = {
-            x: TILE_SIZE, y: TILE_SIZE, 
+            x: TILE_SIZE / 2, y: TILE_SIZE / 2, 
             baseLevel: 0, 
             visualZ: 0,  
             width: 16, height: 35,
@@ -756,6 +825,125 @@
         const hook = { state: 'IDLE', charge: 0, maxCharge: 400, chargeRate: 6, x: 0, y: 0, targetX: 0, targetY: 0, speed: 8, caughtDebris: [] };
         const manta = { state: 'COOLDOWN', x: 0, y: 0, targetTile: null, hp: 8, maxHp: 8, timer: 0, maxTimer: 900, cooldown: 900, speed: 2 };
         const giantBird = { active: false, state: 'WAITING', x: 0, y: 0, z: 200, hp: 6, maxHp: 6, diveTimer: 0, spawnTimer: 7200, angle: 0 };
+
+        // --- FONCTIONS MODE DÉVELOPPEUR (CALIBRAGE AVEC SLIDERS) ---
+        let isRatioLocked = true;
+        let currentRatio = 1;
+
+        function toggleLockRatio() {
+            isRatioLocked = !isRatioLocked;
+            document.getElementById('lock-ratio-btn').innerText = isRatioLocked ? '🔒' : '🔓';
+            if (isRatioLocked) {
+                let w = parseFloat(document.getElementById('calib-w-slider').value) || 1;
+                let h = parseFloat(document.getElementById('calib-h-slider').value) || 1;
+                currentRatio = w / h;
+            }
+        }
+
+        function loadCalibData() {
+            let assetId = document.getElementById('calib-select').value;
+            let a = ASSETS[assetId];
+            
+            document.getElementById('calib-src').value = a.src;
+            
+            document.getElementById('calib-w-slider').value = a.w;
+            document.getElementById('calib-w-val').innerText = a.w;
+            
+            document.getElementById('calib-h-slider').value = a.h;
+            document.getElementById('calib-h-val').innerText = a.h;
+            
+            document.getElementById('calib-ox-slider').value = a.ox;
+            document.getElementById('calib-ox-val').innerText = a.ox;
+            
+            document.getElementById('calib-oy-slider').value = a.oy;
+            document.getElementById('calib-oy-val').innerText = a.oy;
+
+            document.getElementById('calib-sx-slider').value = a.sx || 0;
+            document.getElementById('calib-sx-val').innerText = a.sx || 0;
+
+            document.getElementById('calib-sy-slider').value = a.sy || 0;
+            document.getElementById('calib-sy-val').innerText = a.sy || 0;
+
+            if (isRatioLocked) {
+                currentRatio = a.h !== 0 ? a.w / a.h : 1;
+            }
+        }
+
+        function applyCalibSrc() {
+            let assetId = document.getElementById('calib-select').value;
+            let a = ASSETS[assetId];
+            let newSrc = document.getElementById('calib-src').value;
+            
+            if (a.src !== newSrc) {
+                a.src = newSrc;
+                if (newSrc !== '') {
+                    a.img.onload = () => { a.loaded = true; };
+                    a.img.onerror = () => { a.loaded = false; alert("L'image n'a pas pu être chargée. Vérifie ton lien !"); };
+                    a.img.src = newSrc;
+                } else {
+                    a.loaded = false;
+                }
+            }
+        }
+
+        function applyCalib(changedProp) {
+            let assetId = document.getElementById('calib-select').value;
+            let a = ASSETS[assetId];
+            
+            let wSlider = document.getElementById('calib-w-slider');
+            let hSlider = document.getElementById('calib-h-slider');
+            
+            let w = parseFloat(wSlider.value);
+            let h = parseFloat(hSlider.value);
+            
+            if (isRatioLocked) {
+                if (changedProp === 'w') {
+                    h = Math.round(w / currentRatio);
+                    hSlider.value = h;
+                } else if (changedProp === 'h') {
+                    w = Math.round(h * currentRatio);
+                    wSlider.value = w;
+                }
+            }
+            
+            a.w = w;
+            a.h = h;
+            a.ox = parseFloat(document.getElementById('calib-ox-slider').value);
+            a.oy = parseFloat(document.getElementById('calib-oy-slider').value);
+            a.sx = parseFloat(document.getElementById('calib-sx-slider').value);
+            a.sy = parseFloat(document.getElementById('calib-sy-slider').value);
+            
+            document.getElementById('calib-w-val').innerText = a.w;
+            document.getElementById('calib-h-val').innerText = a.h;
+            document.getElementById('calib-ox-val').innerText = a.ox;
+            document.getElementById('calib-oy-val').innerText = a.oy;
+            document.getElementById('calib-sx-val').innerText = a.sx;
+            document.getElementById('calib-sy-val').innerText = a.sy;
+        }
+
+        function exportCalib() {
+            let out = "const ASSETS_URLS = {\n";
+            for(let key in ASSETS) {
+                let a = ASSETS[key];
+                out += `    ${key}: { src: '${a.src}', w: ${a.w}, h: ${a.h}, ox: ${a.ox}, oy: ${a.oy}, sx: ${a.sx || 0}, sy: ${a.sy || 0} },\n`;
+            }
+            out += "};";
+            console.log("=== COPIER LE CODE CI-DESSOUS ===");
+            console.log(out);
+            
+            // Copie dans le presse-papier
+            const textArea = document.createElement("textarea");
+            textArea.value = out;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert("Le code a été copié dans ton presse-papier ! Tu n'as plus qu'à le coller dans ton script.");
+            } catch (err) {
+                alert("Impossible de copier automatiquement. Les réglages sont affichés dans la console (F12) !");
+            }
+            document.body.removeChild(textArea);
+        }
 
         function checkRaftIntegrity() {
             if (raftTiles.size === 0) return;
@@ -843,19 +1031,21 @@
         }
 
         let audioCtx; let musicGainNode; let windGainNode; let isMusicPlaying = false; let currentMusicVolume = 0.05; 
+        const bgMusic = new Audio('https://cdn.pixabay.com/download/audio/2022/07/08/audio_5f638f7733.mp3?filename=dream-protocol-wind-chimes-ambient-piano-114676.mp3');
+        bgMusic.loop = true;
 
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (!isMusicPlaying && gameState === 'PLAYING') { startProceduralMusic(); startWindSound(); }
+            if (!isMusicPlaying && gameState === 'PLAYING') { startMusic(); startWindSound(); }
         }
 
         function updateMusicVolume(val) {
             currentMusicVolume = parseFloat(val);
             document.getElementById('vol-display').innerText = Math.round(currentMusicVolume * 100) + '%';
             if (isMuted) return; 
-            if (musicGainNode) musicGainNode.gain.setTargetAtTime(currentMusicVolume, audioCtx.currentTime, 0.1);
             if (windGainNode) windGainNode.gain.setTargetAtTime(currentMusicVolume * 0.05, audioCtx.currentTime, 0.1);
+            bgMusic.volume = currentMusicVolume;
         }
 
         let isMuted = false;
@@ -864,11 +1054,11 @@
             document.getElementById('icon-mute').innerText = isMuted ? '🔇' : '🔊';
             if (audioCtx) {
                 if (isMuted) {
-                    if (musicGainNode) musicGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
                     if (windGainNode) windGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                    bgMusic.volume = 0;
                 } else {
-                    if (musicGainNode) musicGainNode.gain.setTargetAtTime(currentMusicVolume, audioCtx.currentTime, 0.1);
                     if (windGainNode) windGainNode.gain.setTargetAtTime(currentMusicVolume * 0.05, audioCtx.currentTime, 0.1);
+                    bgMusic.volume = currentMusicVolume;
                     playSound('ui');
                 }
             }
@@ -897,37 +1087,14 @@
             modulateWind();
         }
 
-        function startProceduralMusic() {
-            if (!audioCtx || isMusicPlaying) return;
+        function startMusic() {
+            if (isMusicPlaying) return;
             isMusicPlaying = true;
-            musicGainNode = audioCtx.createGain(); musicGainNode.gain.value = currentMusicVolume; musicGainNode.connect(audioCtx.destination);
-            const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
-
-            function playAmbientNote() {
-                if (!isMusicPlaying) return;
-                const osc = audioCtx.createOscillator(); const noteGain = audioCtx.createGain();
-                const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
-                if (panner) panner.pan.value = (Math.random() * 1.8) - 0.9; 
-
-                osc.type = 'sine';
-                let freq = scale[Math.floor(Math.random() * scale.length)];
-                if (Math.random() > 0.6) freq = freq * 2; 
-                osc.frequency.value = freq;
-
-                const now = audioCtx.currentTime;
-                const attack = 1.0 + Math.random() * 2.0; const release = 3.0 + Math.random() * 4.0;
-                
-                noteGain.gain.setValueAtTime(0, now);
-                noteGain.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.04, now + attack); 
-                noteGain.gain.linearRampToValueAtTime(0, now + attack + release);
-
-                const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 3500;
-                osc.connect(filter); filter.connect(noteGain);
-                if (panner) { noteGain.connect(panner); panner.connect(musicGainNode); } else { noteGain.connect(musicGainNode); }
-                osc.start(now); osc.stop(now + attack + release);
-                setTimeout(playAmbientNote, 500 + Math.random() * 2500);
-            }
-            playAmbientNote(); setTimeout(playAmbientNote, 800); setTimeout(playAmbientNote, 1600); setTimeout(playAmbientNote, 2400); setTimeout(playAmbientNote, 3200);
+            bgMusic.volume = isMuted ? 0 : currentMusicVolume;
+            bgMusic.play().catch(e => {
+                console.log("Lecture audio bloquée par le navigateur:", e);
+                isMusicPlaying = false;
+            });
         }
 
         function playSound(type) {
@@ -1099,6 +1266,9 @@
             Object.keys(menus).forEach(k => { if(k !== menuName && menus[k]) { menus[k] = false; document.getElementById(`${k}-menu`).style.display = 'none'; } });
             menus[menuName] = !menus[menuName]; document.getElementById(`${menuName}-menu`).style.display = menus[menuName] ? 'block' : 'none';
             overlay.style.display = Object.values(menus).some(v => v) ? 'block' : 'none';
+            
+            if (menuName === 'calib' && menus.calib) loadCalibData(); 
+            
             if (!menus.settings && isRebinding) { document.getElementById(`bind-${isRebinding}`).classList.remove('listening'); document.getElementById(`bind-${isRebinding}`).innerText = keyBinds[isRebinding].toUpperCase(); isRebinding = null; }
             updateUI(); 
         }
@@ -1190,6 +1360,16 @@
                 }
             });
             return buildables;
+        }
+
+        function getPeripheralTiles() {
+            let peripherals = [];
+            raftTiles.forEach((data, tileStr) => {
+                let [gx, gy] = tileStr.split(',').map(Number);
+                let neighbors = [`${gx+1},${gy}`, `${gx-1},${gy}`, `${gx},${gy+1}`, `${gx},${gy-1}`];
+                if (neighbors.some(n => !raftTiles.has(n))) peripherals.push({x: gx, y: gy, key: tileStr});
+            });
+            return peripherals;
         }
 
         function getHoveredExistingTile() {
@@ -1512,9 +1692,11 @@
             }
             if (Math.random() < 0.15) { let p = spawnEdgePos(); windLines.push(createWind(p.x, p.y)); }
 
-            if (gameState === 'START' || Object.values(menus).some(v => v)) return; 
+            if (gameState === 'START' || (Object.values(menus).some(v => v) && !menus.calib)) return; 
 
-            if (dayCount >= 2) {
+            if (menus.calib) return;
+
+            if (dayCount >= 3) {
                 if (!giantBird.active && giantBird.state === 'WAITING') {
                     giantBird.spawnTimer--;
                     if (giantBird.spawnTimer <= 0) {
@@ -1617,7 +1799,7 @@
                 }
             }
 
-            player.visualZ += (targetVisualZ - player.visualZ) * 0.3;
+            player.visualZ += (targetVisualZ - player.visualZ) * 0.3; 
 
             const oldCamX = camera.x; const oldCamY = camera.y;
             let pScreen = worldToScreen(player.x, player.y, player.visualZ);
@@ -1737,25 +1919,26 @@
                     }
                 } else { hook.x += (dx/dist) * hook.speed; hook.y += (dy/dist) * hook.speed; }
             }
+        } 
 
-            hoveredBuildTile = null; hoveredExistingTile = null;
-            if (activeTool === 'platform') {
-                let minDist = Infinity;
-                for (let b of getBuildableTiles()) {
-                    let zOff = b.level === 1 ? Z_HEIGHT : 0;
-                    const screenC = worldToScreen(b.x * TILE_SIZE + TILE_SIZE/2, b.y * TILE_SIZE + TILE_SIZE/2, zOff);
-                    const dist = Math.hypot(mouse.x - screenC.x, mouse.y - screenC.y);
-                    if (dist < TILE_SIZE * 0.8 && dist < minDist) { minDist = dist; hoveredBuildTile = b; }
-                }
-            } else if (activeTool === 'table' || activeTool === 'axe' || activeTool === 'hook' || activeTool === 'sail' || activeTool === 'torch' || activeTool === 'wall' || activeTool === 'stairs') {
-                hoveredExistingTile = getHoveredExistingTile();
+        // --- DESSINS AVEC SUPPORT DU MODE CALIBRATION ET SKEW ---
+        
+        // Nouvelle fonction pour dessiner un asset avec décalage et distorsion !
+        function drawAsset(ctx, asset, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            if (asset.sx || asset.sy) {
+                // Application de la matrice de distorsion (skew) :
+                let sxRad = (asset.sx || 0) * Math.PI / 180;
+                let syRad = (asset.sy || 0) * Math.PI / 180;
+                ctx.transform(1, Math.tan(syRad), Math.tan(sxRad), 1, 0, 0);
             }
+            ctx.drawImage(asset.img, asset.ox, asset.oy, asset.w, asset.h);
+            ctx.restore();
         }
 
-        // --- DRAW VISUALS OVERHAUL ---
         function drawPoly(pts, fill, stroke, lineWidth=1) {
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
             for(let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
             ctx.closePath();
             if(fill) { ctx.fillStyle = fill; ctx.fill(); }
@@ -1774,23 +1957,81 @@
                 return;
             }
 
+            let drawProc = true;
+            if (ASSETS.platform.loaded && !menus.calib) drawProc = false;
+
+            if (drawProc) {
+                if (ASSETS.platform.loaded && menus.calib) ctx.globalAlpha = 0.4; // Modèle 3D transparent
+                
+                drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
+                ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
+                for(let i=1; i<=4; i++) {
+                    let p1 = worldToScreen(lx + (TILE_SIZE/5)*i, ly, zOffset);
+                    let p2 = worldToScreen(lx + (TILE_SIZE/5)*i, ly + TILE_SIZE, zOffset);
+                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                }
+                const th = 8;
+                const bL = {x: left.x, y: left.y + th}, bB = {x: bottom.x, y: bottom.y + th}, bR = {x: right.x, y: right.y + th};
+                drawPoly([left, bottom, bB, bL], '#b86638', '#7a3e14'); 
+                drawPoly([bottom, right, bR, bB], '#8c4819', '#5c2d0f'); 
+                
+                if (ASSETS.platform.loaded && menus.calib) ctx.globalAlpha = 1.0;
+            }
+
             if (ASSETS.platform.loaded) {
-                ctx.drawImage(ASSETS.platform.img, top.x + ASSETS.platform.ox, top.y + ASSETS.platform.oy, ASSETS.platform.w, ASSETS.platform.h);
-                return;
+                if (menus.calib) ctx.globalAlpha = 0.8; // Image un peu transparente
+                drawAsset(ctx, ASSETS.platform, top.x, top.y);
+                if (menus.calib) ctx.globalAlpha = 1.0;
+            }
+        }
+
+        function drawDebris3D(d) {
+            let screen;
+            if (d.isHooked) {
+                const offsetX = (d.x % 20) - 10; const offsetY = (d.y % 20) - 10; screen = {x: hook.x + offsetX, y: hook.y + offsetY};
+            } else { screen = worldToScreen(d.x, d.y, 0); }
+            
+            ctx.save(); ctx.translate(screen.x, screen.y); ctx.translate(0, Math.sin((Date.now() + d.x)/300) * 4);
+
+            let assetRef = d.type === 'wood' ? ASSETS.wood : (d.type === 'scrap' ? ASSETS.scrap : (d.type === 'barrel' ? ASSETS.barrel : null));
+            let drawProc = true;
+
+            if (assetRef && assetRef.loaded && !menus.calib) drawProc = false; 
+
+            if (drawProc) {
+                if (assetRef && assetRef.loaded && menus.calib) ctx.globalAlpha = 0.4;
+                if (d.type === 'wood') {
+                    drawPoly([{x:-20,y:-8}, {x:8,y:-14}, {x:20,y:-3}, {x:-8,y:3}], '#d17b3d', '#a6642f'); 
+                    drawPoly([{x:-20,y:-8}, {x:-8,y:3}, {x:-8,y:10}, {x:-20,y:-1}], '#b86638', '#733c16'); 
+                    drawPoly([{x:-8,y:3}, {x:20,y:-3}, {x:20,y:4}, {x:-8,y:10}], '#8c4819', '#4a250c'); 
+                    ctx.strokeStyle = '#a6642f'; ctx.beginPath(); ctx.moveTo(-6, -3); ctx.lineTo(14, -8); ctx.stroke();
+                } else if (d.type === 'scrap') {
+                    drawPoly([{x:-10,y:-2}, {x:2,y:-10}, {x:12,y:-4}, {x:0,y:4}], '#bdc3c7', '#95a5a6'); 
+                    drawPoly([{x:-10,y:-2}, {x:0,y:4}, {x:0,y:12}, {x:-10,y:6}], '#95a5a6', '#7f8c8d'); 
+                    drawPoly([{x:0,y:4}, {x:12,y:-4}, {x:12,y:4}, {x:0,y:12}], '#7f8c8d', '#34495e'); 
+                } else if (d.type === 'barrel') {
+                    ctx.fillStyle = '#b86638';
+                    ctx.beginPath(); ctx.ellipse(0, -5, 14, 20, 0, 0, Math.PI); ctx.fill(); 
+                    ctx.fillRect(-14, -20, 28, 15); 
+                    ctx.fillStyle = '#d17b3d';
+                    ctx.beginPath(); ctx.ellipse(0, -20, 14, 7, 0, 0, Math.PI*2); ctx.fill(); 
+                    ctx.strokeStyle = '#8c4819'; ctx.stroke();
+                    ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.ellipse(0, -12, 14, 6, 0, 0, Math.PI); ctx.stroke();
+                    ctx.beginPath(); ctx.ellipse(0, -2, 14, 6, 0, 0, Math.PI); ctx.stroke();
+                } else if (d.type === 'meat') {
+                    drawPoly([{x:-8,y:-4}, {x:8,y:-4}, {x:10,y:4}, {x:-10,y:4}], '#e74c3c', '#c0392b'); 
+                    drawPoly([{x:-12,y:0}, {x:-8,y:-2}, {x:-8,y:2}], '#ecf0f1', '#bdc3c7'); drawPoly([{x:12,y:0}, {x:8,y:-2}, {x:8,y:2}], '#ecf0f1', '#bdc3c7'); 
+                }
+                if (assetRef && assetRef.loaded && menus.calib) ctx.globalAlpha = 1.0;
             }
 
-            drawPoly([top, right, bottom, left], '#d38b4f', '#a6642f', 1);
-            ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
-            for(let i=1; i<=3; i++) {
-                let p1 = worldToScreen(lx + (TILE_SIZE/4)*i, ly, zOffset);
-                let p2 = worldToScreen(lx + (TILE_SIZE/4)*i, ly + TILE_SIZE, zOffset);
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            if (assetRef && assetRef.loaded) {
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, assetRef, 0, 0);
+                if (menus.calib) ctx.globalAlpha = 1.0;
             }
-
-            const th = 8;
-            const bL = {x: left.x, y: left.y + th}, bB = {x: bottom.x, y: bottom.y + th}, bR = {x: right.x, y: right.y + th};
-            drawPoly([left, bottom, bB, bL], '#a05828', '#733c16'); 
-            drawPoly([bottom, right, bR, bB], '#733c16', '#4a250c'); 
+            ctx.restore();
         }
 
         function drawWall(lx, ly, zOffset, dir, isGhost=false) {
@@ -1804,22 +2045,38 @@
             const bottomZ = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset + Z_HEIGHT);
             const leftZ = worldToScreen(lx, ly + TILE_SIZE, zOffset + Z_HEIGHT);
 
-            if (ASSETS.wall && ASSETS.wall.loaded && !isGhost) {
-                ctx.drawImage(ASSETS.wall.img, top.x + ASSETS.wall.ox, top.y + ASSETS.wall.oy, ASSETS.wall.w, ASSETS.wall.h);
-                return;
+            let drawProc = true;
+            if (ASSETS.wall && ASSETS.wall.loaded && !isGhost && !menus.calib) drawProc = false; 
+
+            if (drawProc) {
+                if (ASSETS.wall && ASSETS.wall.loaded && !isGhost && menus.calib) ctx.globalAlpha = 0.4;
+                let pts = []; let faceColor = '#b86638'; let shadowColor = '#7a3e14';
+                if (dir === 0) { pts = [top, right, rightZ, topZ]; faceColor = '#8c4819'; } 
+                else if (dir === 1) { pts = [right, bottom, bottomZ, rightZ]; faceColor = '#d17b3d'; } 
+                else if (dir === 2) { pts = [bottom, left, leftZ, bottomZ]; faceColor = '#b86638'; } 
+                else if (dir === 3) { pts = [left, top, topZ, leftZ]; faceColor = '#8c4819'; } 
+
+                if (isGhost) {
+                    drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
+                    ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                } else {
+                    drawPoly(pts, faceColor, shadowColor, 1);
+                    ctx.strokeStyle = shadowColor; ctx.lineWidth = 1;
+                    for(let i=1; i<=3; i++) {
+                        let r = i/4;
+                        let p1 = { x: pts[0].x + (pts[1].x - pts[0].x)*r, y: pts[0].y + (pts[1].y - pts[0].y)*r };
+                        let p2 = { x: pts[3].x + (pts[2].x - pts[3].x)*r, y: pts[3].y + (pts[2].y - pts[3].y)*r };
+                        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                    drawPoly([ {x: pts[0].x, y: pts[0].y + 15}, {x: pts[1].x, y: pts[1].y + 15}, {x: pts[1].x, y: pts[1].y + 20}, {x: pts[0].x, y: pts[0].y + 20} ], shadowColor);
+                }
+                if (ASSETS.wall && ASSETS.wall.loaded && !isGhost && menus.calib) ctx.globalAlpha = 1.0;
             }
 
-            let pts = []; let c1 = '#8b4513'; let c2 = '#5c4033';
-            if (dir === 0) { pts = [top, right, rightZ, topZ]; c1 = '#7a3e14'; } // Nord
-            else if (dir === 1) { pts = [right, bottom, bottomZ, rightZ]; c1 = '#a0522d'; } // Est
-            else if (dir === 2) { pts = [bottom, left, leftZ, bottomZ]; c1 = '#b86638'; } // Sud
-            else if (dir === 3) { pts = [left, top, topZ, leftZ]; c1 = '#7a3e14'; } // Ouest
-
-            if (isGhost) {
-                drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
-                ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-            } else {
-                drawPoly(pts, c1, c2, 1);
+            if (ASSETS.wall && ASSETS.wall.loaded && !isGhost) {
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.wall, top.x, top.y);
+                if (menus.calib) ctx.globalAlpha = 1.0;
             }
         }
 
@@ -1834,52 +2091,69 @@
             const bottomZ = worldToScreen(lx + TILE_SIZE, ly + TILE_SIZE, zOffset + Z_HEIGHT);
             const leftZ = worldToScreen(lx, ly + TILE_SIZE, zOffset + Z_HEIGHT);
 
-            if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost) {
-                ctx.drawImage(ASSETS.stairs.img, top.x + ASSETS.stairs.ox, top.y + ASSETS.stairs.oy, ASSETS.stairs.w, ASSETS.stairs.h);
-                return;
+            let drawProc = true;
+            if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost && !menus.calib) drawProc = false; 
+
+            if (drawProc) {
+                if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost && menus.calib) ctx.globalAlpha = 0.4;
+                let pts = []; 
+                if (dir === 0) pts = [left, bottom, rightZ, topZ];
+                else if (dir === 1) pts = [top, left, bottomZ, rightZ];
+                else if (dir === 2) pts = [top, right, leftZ, bottomZ];
+                else if (dir === 3) pts = [right, bottom, topZ, leftZ];
+
+                if (isGhost) {
+                    drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
+                    ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                } else {
+                    drawPoly(pts, '#d17b3d', '#a6642f', 1);
+                    ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
+                    for(let i=1; i<=4; i++) {
+                        let r = i/5;
+                        let p1 = { x: pts[0].x + (pts[3].x - pts[0].x)*r, y: pts[0].y + (pts[3].y - pts[0].y)*r };
+                        let p2 = { x: pts[1].x + (pts[2].x - pts[1].x)*r, y: pts[1].y + (pts[2].y - pts[1].y)*r };
+                        drawPoly([p1, p2, {x: p2.x, y: p2.y+4}, {x: p1.x, y: p1.y+4}], '#b86638', '#733c16');
+                    }
+                }
+                if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost && menus.calib) ctx.globalAlpha = 1.0;
             }
 
-            let pts = []; 
-            if (dir === 0) pts = [left, bottom, rightZ, topZ];
-            else if (dir === 1) pts = [top, left, bottomZ, rightZ];
-            else if (dir === 2) pts = [top, right, leftZ, bottomZ];
-            else if (dir === 3) pts = [right, bottom, topZ, leftZ];
-
-            if (isGhost) {
-                drawPoly(pts, 'rgba(46, 204, 113, 0.5)', 'white', 2);
-                ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-            } else {
-                drawPoly(pts, '#d38b4f', '#a6642f', 1);
-                ctx.strokeStyle = '#a6642f'; ctx.lineWidth = 1;
-                for(let i=1; i<=4; i++) {
-                    let r = i/5;
-                    let p1 = { x: pts[0].x + (pts[3].x - pts[0].x)*r, y: pts[0].y + (pts[3].y - pts[0].y)*r };
-                    let p2 = { x: pts[1].x + (pts[2].x - pts[1].x)*r, y: pts[1].y + (pts[2].y - pts[1].y)*r };
-                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                }
+            if (ASSETS.stairs && ASSETS.stairs.loaded && !isGhost) {
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.stairs, top.x, top.y);
+                if (menus.calib) ctx.globalAlpha = 1.0;
             }
         }
 
         function drawCraftingTable(lx, ly, zOffset) {
             const screen = worldToScreen(lx + TILE_SIZE/2, ly + TILE_SIZE/2, zOffset);
-            if (ASSETS.table.loaded) {
-                ctx.drawImage(ASSETS.table.img, screen.x + ASSETS.table.ox, screen.y + ASSETS.table.oy, ASSETS.table.w, ASSETS.table.h);
-                return;
+            
+            let drawProc = true;
+            if (ASSETS.table.loaded && !menus.calib) drawProc = false; 
+
+            if (drawProc) {
+                if (ASSETS.table.loaded && menus.calib) ctx.globalAlpha = 0.4;
+                const offset = 12; const size = TILE_SIZE - (offset*2); const height = 15;
+                const top = worldToScreen(lx + offset, ly + offset, zOffset); top.y -= height;
+                const right = worldToScreen(lx + offset + size, ly + offset, zOffset); right.y -= height;
+                const bottom = worldToScreen(lx + offset + size, ly + offset + size, zOffset); bottom.y -= height;
+                const left = worldToScreen(lx + offset, ly + offset + size, zOffset); left.y -= height;
+
+                ctx.fillStyle = '#5c4033';
+                ctx.fillRect(left.x - 2, left.y, 4, height); ctx.fillRect(right.x - 2, right.y, 4, height); ctx.fillRect(bottom.x - 2, bottom.y, 4, height);
+
+                const bL = {x: left.x, y: left.y + 4}, bB = {x: bottom.x, y: bottom.y + 4}, bR = {x: right.x, y: right.y + 4};
+                drawPoly([left, bottom, bB, bL], '#a05828', '#733c16'); drawPoly([bottom, right, bR, bB], '#733c16', '#4a250c'); drawPoly([top, right, bottom, left], '#d17b3d', '#8c4819'); 
+                drawPoly([top, right, {x: right.x, y: right.y - 20}, {x: top.x, y: top.y - 20}], '#b86638', '#5c4033');
+                drawPoly([ {x: top.x + 5, y: top.y + 5}, {x: right.x - 10, y: top.y + 10}, {x: right.x - 15, y: bottom.y - 10}, {x: left.x + 5, y: bottom.y - 15} ], '#f5e8c7', '#d4c29c');
+                if (ASSETS.table.loaded && menus.calib) ctx.globalAlpha = 1.0;
             }
 
-            const offset = 12; const size = TILE_SIZE - (offset*2); const height = 20;
-            const top = worldToScreen(lx + offset, ly + offset, zOffset); top.y -= height;
-            const right = worldToScreen(lx + offset + size, ly + offset, zOffset); right.y -= height;
-            const bottom = worldToScreen(lx + offset + size, ly + offset + size, zOffset); bottom.y -= height;
-            const left = worldToScreen(lx + offset, ly + offset + size, zOffset); left.y -= height;
-
-            const bL = {x: left.x, y: left.y + height}, bB = {x: bottom.x, y: bottom.y + height}, bR = {x: right.x, y: right.y + height};
-            drawPoly([left, bottom, bB, bL], '#c0392b', '#922b21'); 
-            drawPoly([bottom, right, bR, bB], '#922b21', '#641e16'); 
-            drawPoly([top, right, bottom, left], '#e74c3c', '#c0392b'); 
-
-            ctx.fillStyle = '#7f8c8d';
-            ctx.beginPath(); ctx.ellipse(top.x, top.y + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+            if (ASSETS.table.loaded) {
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.table, screen.x, screen.y);
+                if (menus.calib) ctx.globalAlpha = 1.0;
+            }
         }
 
         function drawSail(lx, ly, zOffset) {
@@ -1912,14 +2186,28 @@
             }
 
             const x = screen.x; const y = screen.y - bob;
+            
+            let drawProc = true;
+            if (ASSETS.player.loaded && !menus.calib) drawProc = false; 
+
+            if (drawProc) {
+                if (ASSETS.player.loaded && menus.calib) ctx.globalAlpha = 0.4;
+                const skin = '#f1c27d'; const skinDark = '#e0a961'; const shirt = '#e67e22'; const shirtDark = '#d35400';
+                const jeans = '#2980b9'; const jeansDark = '#2471a3'; const hair = '#5c4033'; const shoes = '#4a2311';
+                ctx.fillStyle = jeans; ctx.fillRect(x - 7, y - 14 - leg1Lift, 6, 14); ctx.fillRect(x + 1, y - 14 - leg2Lift, 6, 14);
+                ctx.fillStyle = shoes; ctx.fillRect(x - 7, y - leg1Lift, 6, 4); ctx.fillRect(x + 1, y - leg2Lift, 6, 4);
+                drawPoly([{x:x-9, y:y-28}, {x:x+9, y:y-28}, {x:x+9, y:y-14}, {x:x-9, y:y-14}], shirt, shirtDark);
+                ctx.fillStyle = skin; ctx.fillRect(x - 13, y - 28, 4, 10); ctx.fillRect(x + 9, y - 28, 4, 10);
+                ctx.fillStyle = shirt; ctx.fillRect(x - 13, y - 28, 4, 4); ctx.fillRect(x + 9, y - 28, 4, 4);
+                drawPoly([{x:x-8, y:y-42}, {x:x+8, y:y-42}, {x:x+8, y:y-28}, {x:x-8, y:y-28}], skin, skinDark);
+                drawPoly([{x:x-8, y:y-42}, {x:x+8, y:y-42}, {x:x+8, y:y-37}, {x:x-8, y:y-37}], hair, '#3e2723');
+                if (ASSETS.player.loaded && menus.calib) ctx.globalAlpha = 1.0;
+            }
 
             if (ASSETS.player.loaded) {
-                ctx.drawImage(ASSETS.player.img, x + ASSETS.player.ox, y + ASSETS.player.oy, ASSETS.player.w, ASSETS.player.h);
-            } else {
-                ctx.fillStyle = '#2980b9'; ctx.fillRect(x - 6, screen.y - 12 - leg1Lift, 5, 12); ctx.fillRect(x + 1, screen.y - 12 - leg2Lift, 5, 12);
-                ctx.fillStyle = '#e67e22'; drawPoly([{x:x-8, y:y-26}, {x:x+8, y:y-26}, {x:x+7, y:y-12}, {x:x-7, y:y-12}], '#e67e22', '#d35400');
-                ctx.fillStyle = '#f5b041'; ctx.fillRect(x - 6, y - 38, 12, 12);
-                ctx.fillStyle = '#5c4033'; ctx.fillRect(x - 7, y - 40, 14, 5); ctx.fillRect(x - 7, y - 40, 4, 10);
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.player, x, y);
+                if (menus.calib) ctx.globalAlpha = 1.0;
             }
 
             if (activeTool === 'spear' && player.currentAction === 'spear') {
@@ -1938,44 +2226,31 @@
             }
         }
 
-        function drawDebris3D(d) {
-            let screen;
-            if (d.isHooked) {
-                const offsetX = (d.x % 20) - 10; const offsetY = (d.y % 20) - 10; screen = {x: hook.x + offsetX, y: hook.y + offsetY};
-            } else { screen = worldToScreen(d.x, d.y, 0); }
-            
-            ctx.save(); ctx.translate(screen.x, screen.y); ctx.translate(0, Math.sin((Date.now() + d.x)/300) * 4);
-
-            if (d.type === 'wood') {
-                if (ASSETS.wood.loaded) { ctx.drawImage(ASSETS.wood.img, ASSETS.wood.ox, ASSETS.wood.oy, ASSETS.wood.w, ASSETS.wood.h); } 
-                else { drawPoly([{x:-15,y:-5}, {x:5,y:-10}, {x:15,y:-2}, {x:-5,y:3}], '#d38b4f', '#a6642f'); drawPoly([{x:-15,y:-5}, {x:-5,y:3}, {x:-5,y:10}, {x:-15,y:2}], '#a05828', '#733c16'); drawPoly([{x:-5,y:3}, {x:15,y:-2}, {x:15,y:5}, {x:-5,y:10}], '#733c16', '#4a250c'); }
-            } else if (d.type === 'scrap') {
-                if (ASSETS.scrap.loaded) { ctx.drawImage(ASSETS.scrap.img, ASSETS.scrap.ox, ASSETS.scrap.oy, ASSETS.scrap.w, ASSETS.scrap.h); } 
-                else { drawPoly([{x:-8,y:0}, {x:2,y:-8}, {x:10,y:-2}, {x:4,y:6}], '#95a5a6', '#7f8c8d'); drawPoly([{x:4,y:6}, {x:10,y:-2}, {x:15,y:2}, {x:8,y:10}], '#7f8c8d', '#34495e'); }
-            } else if (d.type === 'meat') {
-                drawPoly([{x:-8,y:-4}, {x:8,y:-4}, {x:10,y:4}, {x:-10,y:4}], '#e74c3c', '#c0392b'); drawPoly([{x:-12,y:0}, {x:-8,y:-2}, {x:-8,y:2}], '#ecf0f1', '#bdc3c7'); drawPoly([{x:12,y:0}, {x:8,y:-2}, {x:8,y:2}], '#ecf0f1', '#bdc3c7'); 
-            } else if (d.type === 'barrel') {
-                if (ASSETS.barrel.loaded) { ctx.drawImage(ASSETS.barrel.img, ASSETS.barrel.ox, ASSETS.barrel.oy, ASSETS.barrel.w, ASSETS.barrel.h); } 
-                else { drawPoly([{x:-12,y:-6}, {x:12,y:-6}, {x:10,y:10}, {x:-10,y:10}], '#d35400', '#a04000'); drawPoly([{x:-13,y:-4}, {x:13,y:-4}, {x:13,y:0}, {x:-13,y:0}], '#7f8c8d', '#34495e'); drawPoly([{x:-11,y:4}, {x:11,y:4}, {x:11,y:8}, {x:-11,y:8}], '#7f8c8d', '#34495e'); drawPoly([{x:-12,y:-6}, {x:0,y:-10}, {x:12,y:-6}], '#e67e22', '#d35400'); }
-            }
-            ctx.restore();
-        }
-
         function drawGiantBird() {
             if (!giantBird.active) return;
             const screenB = worldToScreen(giantBird.x, giantBird.y, 0); const drawY = screenB.y - giantBird.z;
             ctx.save(); ctx.translate(screenB.x, drawY);
 
             const flap = Math.sin(Date.now() / 80) * 15;
+            let drawProc = true;
 
-            if (ASSETS.giantBird && ASSETS.giantBird.loaded) { ctx.drawImage(ASSETS.giantBird.img, ASSETS.giantBird.ox, ASSETS.giantBird.oy, ASSETS.giantBird.w, ASSETS.giantBird.h); } 
-            else {
+            if (ASSETS.giantBird && ASSETS.giantBird.loaded && !menus.calib) drawProc = false; 
+            
+            if (drawProc) {
+                if (ASSETS.giantBird && ASSETS.giantBird.loaded && menus.calib) ctx.globalAlpha = 0.4;
                 drawPoly([{x: 0, y: -25}, {x: -15, y: 15}, {x: 0, y: 35}, {x: 15, y: 15}], '#2c3e50', '#1a252f');
                 drawPoly([{x: -15, y: 5}, {x: -50, y: -15 + flap}, {x: -5, y: 20}], '#34495e', '#2c3e50');
                 drawPoly([{x: 15, y: 5}, {x: 50, y: -15 + flap}, {x: 5, y: 20}], '#34495e', '#2c3e50');
                 drawPoly([{x: -10, y: 30}, {x: 0, y: 50}, {x: 10, y: 30}], '#1a252f', '#000000');
                 ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(-5, -10, 3, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(5, -10, 3, 0, Math.PI*2); ctx.fill();
+                if (ASSETS.giantBird && ASSETS.giantBird.loaded && menus.calib) ctx.globalAlpha = 1.0;
             }
+
+            if (ASSETS.giantBird && ASSETS.giantBird.loaded) { 
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.giantBird, 0, 0);
+                if (menus.calib) ctx.globalAlpha = 1.0;
+            } 
 
             if (giantBird.hp < giantBird.maxHp && giantBird.state !== 'FLEEING') {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -50, 40, 6); ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -50, 40 * (giantBird.hp/giantBird.maxHp), 6);
@@ -1990,12 +2265,24 @@
             
             if (manta.state === 'APPROACHING') ctx.globalAlpha = 0.5; 
             
-            if (ASSETS.manta.loaded) { ctx.drawImage(ASSETS.manta.img, ASSETS.manta.ox, ASSETS.manta.oy, ASSETS.manta.w, ASSETS.manta.h); } 
-            else {
-                drawPoly([{x:0, y:-30}, {x:-50, y:10}, {x:0, y:60}], '#1abc9c', '#16a085', 2); drawPoly([{x:0, y:-30}, {x:50, y:10}, {x:0, y:60}], '#16a085', '#117a65', 2); 
-                ctx.strokeStyle = '#117a65'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(Date.now()/150)*15, 90); ctx.stroke();
-                ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-10, -10, 3, 0, Math.PI*2); ctx.arc(10, -10, 3, 0, Math.PI*2); ctx.fill();
+            let drawProc = true;
+            if (ASSETS.manta.loaded && !menus.calib) drawProc = false; 
+            
+            if (drawProc) {
+                if (ASSETS.manta.loaded && menus.calib) ctx.globalAlpha = 0.4;
+                const colorLight = '#00bcd4'; const colorDark = '#008b8b'; const colorEdge = '#006064';
+                drawPoly([{x:0, y:-35}, {x:-60, y:5}, {x:0, y:40}], colorLight, colorEdge, 2); 
+                drawPoly([{x:0, y:-35}, {x:60, y:5}, {x:0, y:40}], colorDark, colorEdge, 2); 
+                ctx.strokeStyle = colorEdge; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, 40); ctx.lineTo(Math.sin(Date.now()/150)*20, 80); ctx.stroke();
+                ctx.fillStyle = '#e0f7fa'; ctx.beginPath(); ctx.ellipse(-15, -15, 6, 3, Math.PI/4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(15, -15, 6, 3, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+                if (ASSETS.manta.loaded && menus.calib) ctx.globalAlpha = 1.0;
             }
+
+            if (ASSETS.manta.loaded) { 
+                if (menus.calib) ctx.globalAlpha = 0.8;
+                drawAsset(ctx, ASSETS.manta, 0, 0);
+                if (menus.calib) ctx.globalAlpha = 1.0;
+            } 
 
             if (manta.hp < manta.maxHp && manta.state !== 'FLEEING') { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-20, -45, 40, 6); ctx.fillStyle = '#e74c3c'; ctx.fillRect(-20, -45, 40 * (manta.hp/manta.maxHp), 6); }
             ctx.restore();
@@ -2058,14 +2345,14 @@
                     if (data.floor0.hasTorch) drawTorch(x * TILE_SIZE, y * TILE_SIZE, 0);
                 }
 
-                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 0) {
-                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, 0, null, true, 'rgba(231, 76, 60, 0.5)');
+                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 0 && !menus.calib) {
+                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, 0, true, 'rgba(231, 76, 60, 0.5)');
                     else if (activeTool === 'wall' && !data.floor0.walls[buildRotation]) drawWall(x * TILE_SIZE, y * TILE_SIZE, 0, buildRotation, true);
                     else if (activeTool === 'stairs' && data.floor0.stairsDir === -1) drawStairs(x * TILE_SIZE, y * TILE_SIZE, 0, buildRotation, true);
                 }
             }
 
-            if (player.baseLevel < 1) drawPlayer(); // Le joueur est dessiné ici s'il est au RDC ou dans les escaliers
+            if (player.baseLevel < 1) drawPlayer();
 
             for (let key of sortedKeys) {
                 let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
@@ -2075,13 +2362,19 @@
                 }
             }
 
-            if (activeTool === 'platform' && hoveredBuildTile && hoveredBuildTile.level === 0) {
-                let color = inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'; 
-                drawTexturedTile(hoveredBuildTile.x * TILE_SIZE, hoveredBuildTile.y * TILE_SIZE, 0, null, true, color);
+            if (activeTool === 'platform' && !menus.calib) {
+                let buildables = getBuildableTiles();
+                for (let b of buildables) {
+                    if (b.level === 0) {
+                        let isHovered = (hoveredBuildTile && hoveredBuildTile.x === b.x && hoveredBuildTile.y === b.y && hoveredBuildTile.level === 0);
+                        let color = isHovered ? (inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)') : 'rgba(255, 255, 255, 0.15)'; 
+                        drawTexturedTile(b.x * TILE_SIZE, b.y * TILE_SIZE, 0, true, color);
+                    }
+                }
             }
 
             // ================= LAYER 1 (ÉTAGE) =================
-            if (player.baseLevel < 0.5) ctx.globalAlpha = 0.35; // Transparence si le joueur est en bas !
+            if (player.baseLevel < 0.5 && !menus.calib) ctx.globalAlpha = 0.35;
 
             for (let key of sortedKeys) {
                 let data = raftTiles.get(key); let [x, y] = key.split(',').map(Number);
@@ -2094,8 +2387,8 @@
                     if (data.floor1.hasTorch) drawTorch(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT);
                 }
 
-                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 1) {
-                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, null, true, 'rgba(231, 76, 60, 0.5)');
+                if (hoveredExistingTile && hoveredExistingTile.key === key && hoveredExistingTile.targetLevel === 1 && !menus.calib) {
+                    if (activeTool === 'axe') drawTexturedTile(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, true, 'rgba(231, 76, 60, 0.5)');
                     else if (activeTool === 'wall' && !data.floor1.walls[buildRotation]) drawWall(x * TILE_SIZE, y * TILE_SIZE, Z_HEIGHT, buildRotation, true);
                 }
             }
@@ -2110,33 +2403,35 @@
                 }
             }
 
-            if (activeTool === 'platform' && hoveredBuildTile && hoveredBuildTile.level === 1) {
-                let color = inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'; 
-                drawTexturedTile(hoveredBuildTile.x * TILE_SIZE, hoveredBuildTile.y * TILE_SIZE, Z_HEIGHT, null, true, color);
-            }
-
-            ctx.globalAlpha = 1.0; 
-
-            // Hologrammes Table, Sail, Torch
-            if (hoveredExistingTile) {
+            if (activeTool === 'platform' && !menus.calib) {
+                let buildables = getBuildableTiles();
+                for (let b of buildables) {
+                    if (b.level === 1) {
+                        let isHovered = (hoveredBuildTile && hoveredBuildTile.x === b.x && hoveredBuildTile.y === b.y && hoveredBuildTile.level === 1);
+                        let color = isHovered ? (inventory.platforms > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)') : 'rgba(255, 255, 255, 0.15)'; 
+                        drawTexturedTile(b.x * TILE_SIZE, b.y * TILE_SIZE, Z_HEIGHT, true, color);
+                    }
+                }
+            } else if (hoveredExistingTile && !menus.calib) {
                 let floor = hoveredExistingTile.targetLevel === 1 ? hoveredExistingTile.data.floor1 : hoveredExistingTile.data.floor0;
                 let zOff = hoveredExistingTile.targetLevel === 1 ? Z_HEIGHT : 0;
-                
                 if (floor) {
                     if (activeTool === 'table' && !floor.hasTable && !floor.hasSail && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
                         let color = inventory.tables > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, true, color);
                     }
                     if (activeTool === 'sail' && !floor.hasTable && !floor.hasSail && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
                         let color = inventory.sails > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, true, color);
                     }
                     if (activeTool === 'torch' && !floor.hasTorch && (hoveredExistingTile.targetLevel === 1 || (!floor.hasWall && !floor.hasStairs))) {
                         let color = inventory.torches > 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)';
-                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, null, true, color);
+                        drawTexturedTile(hoveredExistingTile.x * TILE_SIZE, hoveredExistingTile.y * TILE_SIZE, zOff, true, color);
                     }
                 }
             }
+
+            ctx.globalAlpha = 1.0; 
 
             drawManta(); drawGiantBird();
 
@@ -2146,16 +2441,34 @@
                 const pScreen = worldToScreen(player.x, player.y, player.visualZ), sX = pScreen.x, sY = pScreen.y - 15;
                 if (hook.state === 'THROWN' || hook.state === 'RETRACTING') {
                     ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(hook.x, hook.y); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.save(); ctx.translate(hook.x, hook.y);
-                    if (ASSETS.hook && ASSETS.hook.loaded) ctx.drawImage(ASSETS.hook.img, -15, -15, 30, 30);
-                    else { ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); }
-                    ctx.restore();
+                    
+                    let drawProc = true;
+                    if (ASSETS.hook && ASSETS.hook.loaded && !menus.calib) drawProc = false; 
+                    
+                    if (drawProc) {
+                        ctx.save(); ctx.translate(hook.x, hook.y);
+                        if (ASSETS.hook && ASSETS.hook.loaded && menus.calib) ctx.globalAlpha = 0.4;
+                        ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); drawPoly([{x:-10,y:0}, {x:10,y:0}, {x:12,y:5}, {x:-12,y:5}], '#95a5a6'); 
+                        if (ASSETS.hook && ASSETS.hook.loaded && menus.calib) ctx.globalAlpha = 1.0;
+                        ctx.restore();
+                    }
+
+                    if (ASSETS.hook && ASSETS.hook.loaded) {
+                        if (menus.calib) ctx.globalAlpha = 0.8;
+                        drawAsset(ctx, ASSETS.hook, hook.x, hook.y);
+                        if (menus.calib) ctx.globalAlpha = 1.0;
+                    }
                 }
                 if (hook.state === 'CHARGING') {
                     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40, 6);
                     ctx.fillStyle = hook.charge > hook.maxCharge * 0.8 ? '#e74c3c' : '#f1c40f'; ctx.fillRect(pScreen.x - 20, pScreen.y - 60, 40 * (hook.charge / hook.maxCharge), 6);
                     ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(mouse.x, mouse.y); ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
                 }
+            }
+
+            // AJOUT DE CETTE BOUCLE ICI :
+            for (let d of debrisList) {
+                if (d.isHooked) drawDebris3D(d);
             }
 
             for (let b of birds) {
